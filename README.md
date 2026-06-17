@@ -1,6 +1,6 @@
 # OmniAI — Multi-AI Consensus Platform
 
-OmniAI is a premium, placement-ready web application that queries multiple AI models (Gemini, DeepSeek, GPT-4o, Claude) concurrently, streams their answers side-by-side using Server-Sent Events (SSE), and then acts as a "Jury" to synthesize a final consensus verdict and recommendation.
+OmniAI is a premium, web application that queries multiple AI models (Gemini, DeepSeek, GPT-4o, Claude) concurrently, streams their answers side-by-side using Server-Sent Events (SSE), and then acts as a "Jury" to synthesize a final consensus verdict and recommendation.
 
 It includes a dedicated **Research Mode** that shifts from conversational cards to a structured, professional document-style report analysis.
 
