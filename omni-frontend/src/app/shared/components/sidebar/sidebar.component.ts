@@ -13,12 +13,13 @@ import { Workspace } from '../../models/workspace.model';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    <div class="sidebar">
+    <div class="sidebar" [class.open]="state.sidebarOpen()">
       <div class="sidebar-header">
-        <div class="logo-area" routerLink="/dashboard" (click)="state.clear()">
+        <div class="logo-area" routerLink="/dashboard" (click)="state.clear(); state.sidebarOpen.set(false)">
           <span class="logo-icon">⚖️</span>
           <span class="logo-text">OmniAI</span>
         </div>
+        <button class="close-sidebar-btn" (click)="state.sidebarOpen.set(false)" title="Close Menu">×</button>
       </div>
 
       <div class="sidebar-content">
@@ -27,12 +28,13 @@ import { Workspace } from '../../models/workspace.model';
           <button class="add-btn" (click)="openCreateModal()" title="New Workspace">+</button>
         </div>
 
-        <div class="workspace-list">
-          <div *ngFor="let ws of workspaces()" class="workspace-item-container">
+        <div class="workspace-list" *ngIf="!isLoading(); else loadingShimmer">
+          <div *ngFor="let ws of state.workspaces()" class="workspace-item-container">
             <div
               class="workspace-item"
               [routerLink]="['/dashboard/workspace', ws.id]"
               [class.active]="state.activeWorkspaceId() === ws.id"
+              (click)="state.sidebarOpen.set(false)"
             >
               <span class="ws-icon">📁</span>
               <span class="ws-name">{{ ws.name }}</span>
@@ -45,6 +47,7 @@ import { Workspace } from '../../models/workspace.model';
                 class="session-subitem"
                 [routerLink]="['/dashboard/session', session.id]"
                 [class.sub-active]="state.activeSessionId() === session.id"
+                (click)="state.sidebarOpen.set(false)"
               >
                 <span class="session-icon">💬</span>
                 <span class="session-title-text">{{ session.title }}</span>
@@ -55,10 +58,16 @@ import { Workspace } from '../../models/workspace.model';
             </div>
           </div>
           
-          <div *ngIf="workspaces().length === 0" class="empty-state">
+          <div *ngIf="state.workspaces().length === 0" class="empty-state">
             No workspaces yet.
           </div>
         </div>
+
+        <ng-template #loadingShimmer>
+          <div class="workspace-loading-shimmer">
+            <div class="shimmer loading-item" *ngFor="let i of [1, 2, 3]"></div>
+          </div>
+        </ng-template>
       </div>
 
       <div class="sidebar-footer" *ngIf="auth.currentUser() as user">
@@ -80,6 +89,11 @@ import { Workspace } from '../../models/workspace.model';
       <div class="modal glass animate-fade-in">
         <h3 class="modal-title">Create Workspace</h3>
         <form (ngSubmit)="onCreateWorkspace()">
+          <!-- Error banner -->
+          <div class="error-banner animate-fade-in" *ngIf="createError()">
+            {{ createError() }}
+          </div>
+
           <div class="form-group">
             <label class="form-label">Name</label>
             <input
@@ -89,6 +103,7 @@ import { Workspace } from '../../models/workspace.model';
               [(ngModel)]="newWorkspaceName"
               required
               placeholder="e.g., Placement Prep"
+              [disabled]="isCreating()"
             />
           </div>
           <div class="form-group">
@@ -98,14 +113,15 @@ import { Workspace } from '../../models/workspace.model';
               class="input-field textarea"
               [(ngModel)]="newWorkspaceDesc"
               placeholder="e.g., DSA and System Design interview prep"
+              [disabled]="isCreating()"
             ></textarea>
           </div>
           <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()" [disabled]="isCreating()">
               Cancel
             </button>
-            <button type="submit" class="btn btn-primary" [disabled]="!newWorkspaceName.trim()">
-              Create
+            <button type="submit" class="btn btn-primary" [disabled]="!newWorkspaceName.trim() || isCreating()">
+              {{ isCreating() ? 'Creating...' : 'Create' }}
             </button>
           </div>
         </form>
@@ -123,11 +139,27 @@ import { Workspace } from '../../models/workspace.model';
       position: fixed;
       left: 0;
       top: 0;
-      z-index: 10;
+      z-index: 100;
+      transition: transform 0.3s ease-in-out;
     }
     .sidebar-header {
       padding: 1.5rem;
       border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .close-sidebar-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .close-sidebar-btn:hover {
+      color: var(--text-primary);
     }
     .logo-area {
       display: flex;
@@ -323,7 +355,7 @@ import { Workspace } from '../../models/workspace.model';
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      z-index: 200;
     }
     .modal {
       width: 90%;
@@ -349,6 +381,41 @@ import { Workspace } from '../../models/workspace.model';
       gap: 0.75rem;
       margin-top: 1.5rem;
     }
+
+    .workspace-loading-shimmer {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.5rem;
+    }
+    .loading-item {
+      height: 36px;
+      border-radius: 8px;
+      width: 100%;
+    }
+    .error-banner {
+      background-color: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--color-error);
+      color: var(--text-primary);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      margin-bottom: 1.25rem;
+      text-align: left;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        box-shadow: 5px 0 25px rgba(0,0,0,0.5);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .close-sidebar-btn {
+        display: block;
+      }
+    }
   `]
 })
 export class SidebarComponent implements OnInit {
@@ -357,8 +424,10 @@ export class SidebarComponent implements OnInit {
   router = inject(Router);
   state = inject(WorkspaceStateService);
 
-  workspaces = signal<Workspace[]>([]);
   showModal = signal(false);
+  isLoading = signal(false);
+  isCreating = signal(false);
+  createError = signal<string | null>(null);
 
   newWorkspaceName = '';
   newWorkspaceDesc = '';
@@ -369,9 +438,15 @@ export class SidebarComponent implements OnInit {
 
   loadWorkspaces(): void {
     if (localStorage.getItem('omni_token')) {
+      this.isLoading.set(true);
       this.api.get<{ workspaces: Workspace[] }>('/workspaces').subscribe({
-        next: (res) => this.workspaces.set(res.workspaces),
-        error: () => {}
+        next: (res) => {
+          this.state.workspaces.set(res.workspaces);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        }
       });
     }
   }
@@ -379,26 +454,35 @@ export class SidebarComponent implements OnInit {
   openCreateModal(): void {
     this.newWorkspaceName = '';
     this.newWorkspaceDesc = '';
+    this.createError.set(null);
     this.showModal.set(true);
   }
 
   closeCreateModal(): void {
+    if (this.isCreating()) return;
     this.showModal.set(false);
   }
 
   onCreateWorkspace(): void {
-    if (!this.newWorkspaceName.trim()) return;
+    if (!this.newWorkspaceName.trim() || this.isCreating()) return;
+
+    this.isCreating.set(true);
+    this.createError.set(null);
 
     this.api.post<{ workspace: Workspace }>('/workspaces', {
       name: this.newWorkspaceName,
       description: this.newWorkspaceDesc
     }).subscribe({
       next: (res) => {
-        this.workspaces.update(list => [...list, res.workspace]);
+        this.isCreating.set(false);
+        this.state.workspaces.update(list => [...list, res.workspace]);
         this.closeCreateModal();
         this.router.navigate(['/dashboard/workspace', res.workspace.id]);
       },
-      error: () => {}
+      error: (err) => {
+        this.isCreating.set(false);
+        this.createError.set(err.error?.message || 'Failed to create workspace. Please try again.');
+      }
     });
   }
 

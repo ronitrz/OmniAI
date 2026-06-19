@@ -122,7 +122,7 @@ export class OpenAIProvider implements AIProvider {
       messages: this.buildMessages(request),
       stream: false,
       max_tokens: request.maxTokens ?? 2048,
-      response_format: request.temperature === 0 ? { type: 'json_object' } : undefined,
+      response_format: request.jsonMode ? { type: 'json_object' } : undefined,
     });
 
     const content = response.choices[0]?.message?.content ?? '';

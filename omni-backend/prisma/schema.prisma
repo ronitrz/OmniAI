@@ -1,6 +1,3 @@
-// prisma/schema.prisma
-// OmniAI V1 Database Schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,8 +6,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-// ── USERS ─────────────────────────────────────────────────────
 
 model User {
   id           String      @id @default(uuid())
@@ -23,83 +18,73 @@ model User {
   @@map("users")
 }
 
-// ── WORKSPACES ────────────────────────────────────────────────
-
 model Workspace {
   id          String    @id @default(uuid())
   name        String
   description String?
   userId      String    @map("user_id")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessions    Session[]
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
+  sessions    Session[]
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("workspaces")
 }
-
-// ── SESSIONS ──────────────────────────────────────────────────
 
 model Session {
   id          String    @id @default(uuid())
   title       String    @default("New Conversation")
   workspaceId String    @map("workspace_id")
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  messages    Message[]
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
+  messages    Message[]
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
-// ── MESSAGES ──────────────────────────────────────────────────
-
 model Message {
   id             String          @id @default(uuid())
-  role           String          // "user" | "assistant"
+  role           String
   content        String
   selectedModels String[]        @map("selected_models")
-  mode           String          @default("standard") // "standard" | "research"
+  mode           String          @default("standard")
   sessionId      String          @map("session_id")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  juryVerdict    JuryVerdict?
   session        Session         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   responses      ModelResponse[]
-  juryVerdict    JuryVerdict?
-  createdAt      DateTime        @default(now()) @map("created_at")
 
   @@map("messages")
 }
 
-// ── MODEL RESPONSES ───────────────────────────────────────────
-
 model ModelResponse {
   id        String   @id @default(uuid())
   messageId String   @map("message_id")
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  modelId   String   @map("model_id")    // "gemini-flash", "deepseek-chat", "gpt-4o", "claude-haiku"
-  modelName String   @map("model_name")  // Display name: "Gemini Flash", "DeepSeek", "GPT-4o", "Claude"
+  modelId   String   @map("model_id")
+  modelName String   @map("model_name")
   content   String
-  isMock    Boolean  @default(false) @map("is_mock") // Internal only — never sent to frontend
-  status    String   @default("success") // "success" | "error" | "timeout"
+  isMock    Boolean  @default(false) @map("is_mock")
+  status    String   @default("success")
   latencyMs Int?     @map("latency_ms")
   createdAt DateTime @default(now()) @map("created_at")
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@map("model_responses")
 }
 
-// ── JURY VERDICTS ─────────────────────────────────────────────
-
 model JuryVerdict {
   id              String   @id @default(uuid())
   messageId       String   @unique @map("message_id")
-  message         Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   consensusText   String   @map("consensus_text")
-  confidenceScore Float    @map("confidence_score") // 0.0 – 1.0
-  confidenceLabel String   @map("confidence_label") // "HIGH" | "MEDIUM" | "LOW"
-  agreements      Json     // string[]
-  contradictions  Json     // { topic: string, positions: Record<string, string> }[]
-  uniqueInsights  Json     @map("unique_insights") // { modelId: string, insight: string }[]
+  confidenceScore Float    @map("confidence_score")
+  confidenceLabel String   @map("confidence_label")
+  agreements      Json
+  contradictions  Json
+  uniqueInsights  Json     @map("unique_insights")
   recommendation  String
   createdAt       DateTime @default(now()) @map("created_at")
+  message         Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@map("jury_verdicts")
 }

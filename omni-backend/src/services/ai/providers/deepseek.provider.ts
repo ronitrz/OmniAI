@@ -1,6 +1,7 @@
 // src/services/ai/providers/deepseek.provider.ts
 // DeepSeek API integration using the OpenAI-compatible SDK.
 // DeepSeek's API is a drop-in replacement for OpenAI's chat completion API.
+// Constructor guarded — client only created when API key is present.
 
 import OpenAI from 'openai';
 import { AIProvider, AIRequest, AIResponse, ChunkCallback, ModelInfo, ConversationTurn } from '../interfaces/ai-provider.interface';
@@ -33,15 +34,17 @@ const SYSTEM_PROMPT_RESEARCH = `You are a senior research analyst. Structure you
 Aim for 600-900 words. Be thorough and analytical.`;
 
 export class DeepSeekProvider implements AIProvider {
-  private client: OpenAI;
+  private client: OpenAI | null = null;
   private readonly modelName = 'deepseek-chat'; // Maps to DeepSeek-V3
   private readonly modelId = 'deepseek-chat';
 
   constructor() {
-    this.client = new OpenAI({
-      apiKey: env.DEEPSEEK_API_KEY,
-      baseURL: 'https://api.deepseek.com/v1',
-    });
+    if (env.DEEPSEEK_API_KEY) {
+      this.client = new OpenAI({
+        apiKey: env.DEEPSEEK_API_KEY,
+        baseURL: 'https://api.deepseek.com/v1',
+      });
+    }
   }
 
   getModelInfo(): ModelInfo {
@@ -50,8 +53,10 @@ export class DeepSeekProvider implements AIProvider {
       displayName: 'DeepSeek',
       fullName: 'DeepSeek V3',
       provider: 'deepseek',
-      tier: 'live',
-      description: 'DeepSeek V3 — excellent reasoning and code generation at very low cost.',
+      tier: this.isAvailable() ? 'live' : 'demo',
+      description: this.isAvailable()
+        ? 'DeepSeek V3 — excellent reasoning and code generation at very low cost.'
+        : 'DeepSeek V3 — Demo Mode. Add DEEPSEEK_API_KEY to enable live.',
       strengths: ['Reasoning', 'Code', 'Analysis'],
       color: '#0ea5e9',
     };
@@ -87,6 +92,8 @@ export class DeepSeekProvider implements AIProvider {
   }
 
   async streamResponse(request: AIRequest, onChunk: ChunkCallback): Promise<AIResponse> {
+    if (!this.client) throw new Error('DeepSeek API key not configured');
+
     const startTime = Date.now();
     let fullContent = '';
 
@@ -116,6 +123,8 @@ export class DeepSeekProvider implements AIProvider {
   }
 
   async generateResponse(request: AIRequest): Promise<AIResponse> {
+    if (!this.client) throw new Error('DeepSeek API key not configured');
+
     const startTime = Date.now();
 
     const response = await this.client.chat.completions.create({
@@ -124,7 +133,7 @@ export class DeepSeekProvider implements AIProvider {
       stream: false,
       max_tokens: request.maxTokens ?? 2048,
       temperature: request.temperature ?? 0.7,
-      response_format: request.temperature === 0 ? { type: 'json_object' } : undefined,
+      response_format: request.jsonMode ? { type: 'json_object' } : undefined,
     });
 
     const content = response.choices[0]?.message?.content ?? '';

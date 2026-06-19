@@ -1,6 +1,7 @@
 // src/services/ai/providers/gemini.provider.ts
 // Google Gemini Flash integration via the official @google/generative-ai SDK.
 // Uses streaming API for real-time token delivery.
+// Constructor guarded — SDK client only created when API key is present.
 
 import { GoogleGenerativeAI, Content } from '@google/generative-ai';
 import { AIProvider, AIRequest, AIResponse, ChunkCallback, ModelInfo } from '../interfaces/ai-provider.interface';
@@ -34,12 +35,14 @@ Structure your response with the following sections using markdown headers:
 Be thorough and evidence-based. Aim for 600-900 words total.`;
 
 export class GeminiProvider implements AIProvider {
-  private client: GoogleGenerativeAI;
+  private client: GoogleGenerativeAI | null = null;
   private readonly modelName = 'gemini-2.0-flash';
   private readonly modelId = 'gemini-flash';
 
   constructor() {
-    this.client = new GoogleGenerativeAI(env.GEMINI_API_KEY!);
+    if (env.GEMINI_API_KEY) {
+      this.client = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+    }
   }
 
   getModelInfo(): ModelInfo {
@@ -48,8 +51,10 @@ export class GeminiProvider implements AIProvider {
       displayName: 'Gemini',
       fullName: 'Gemini 2.0 Flash',
       provider: 'google',
-      tier: 'live',
-      description: 'Google Gemini 2.0 Flash — fast, capable, 1M token context window.',
+      tier: this.isAvailable() ? 'live' : 'demo',
+      description: this.isAvailable()
+        ? 'Google Gemini 2.0 Flash — fast, capable, 1M token context window.'
+        : 'Google Gemini 2.0 Flash — Demo Mode. Add GEMINI_API_KEY to enable live.',
       strengths: ['Speed', 'Long context', 'Multimodal'],
       color: '#4285F4',
     };
@@ -60,6 +65,8 @@ export class GeminiProvider implements AIProvider {
   }
 
   async streamResponse(request: AIRequest, onChunk: ChunkCallback): Promise<AIResponse> {
+    if (!this.client) throw new Error('Gemini API key not configured');
+
     const startTime = Date.now();
     let fullContent = '';
 
@@ -100,6 +107,8 @@ export class GeminiProvider implements AIProvider {
   }
 
   async generateResponse(request: AIRequest): Promise<AIResponse> {
+    if (!this.client) throw new Error('Gemini API key not configured');
+
     const startTime = Date.now();
 
     const model = this.client.getGenerativeModel({

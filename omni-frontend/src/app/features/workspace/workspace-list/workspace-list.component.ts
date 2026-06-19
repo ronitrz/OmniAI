@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
+import { WorkspaceStateService } from '../../../core/services/workspace-state.service';
 import { Workspace } from '../../../shared/models/workspace.model';
 
 @Component({
@@ -13,18 +14,21 @@ import { Workspace } from '../../../shared/models/workspace.model';
   template: `
     <div class="workspace-list-container animate-fade-in">
       <div class="header-section">
-        <div>
-          <h1 class="welcome-title">Welcome to OmniAI</h1>
-          <p class="welcome-subtitle">Select a workspace or create a new one to start analyzing prompts.</p>
+        <div class="header-title-container">
+          <button class="hamburger-btn" (click)="state.sidebarOpen.set(true)" title="Open Menu">☰</button>
+          <div>
+            <h1 class="welcome-title">Welcome to OmniAI</h1>
+            <p class="welcome-subtitle">Select a workspace or create a new one to start analyzing prompts.</p>
+          </div>
         </div>
-        <button class="btn btn-primary" (click)="showModal.set(true)">
+        <button class="btn btn-primary" (click)="openCreateModal()">
           + New Workspace
         </button>
       </div>
 
-      <div class="grid-container" *ngIf="workspaces().length > 0; else emptyState">
+      <div class="grid-container" *ngIf="state.workspaces().length > 0; else emptyState">
         <div 
-          *ngFor="let ws of workspaces()" 
+          *ngFor="let ws of state.workspaces()" 
           class="card workspace-card"
           [routerLink]="['/dashboard/workspace', ws.id]"
         >
@@ -45,18 +49,23 @@ import { Workspace } from '../../../shared/models/workspace.model';
           <div class="empty-icon">📂</div>
           <h3>No Workspaces Yet</h3>
           <p>Get started by creating your first workspace to organize your conversations.</p>
-          <button class="btn btn-primary" (click)="showModal.set(true)">
+          <button class="btn btn-primary" (click)="openCreateModal()">
             Create Workspace
           </button>
         </div>
       </ng-template>
     </div>
 
-    <!-- Create Modal (local copy) -->
+    <!-- Create Modal -->
     <div class="modal-backdrop" *ngIf="showModal()">
       <div class="modal glass animate-fade-in">
         <h3 class="modal-title">Create Workspace</h3>
         <form (ngSubmit)="onCreateWorkspace()">
+          <!-- Error banner -->
+          <div class="error-banner animate-fade-in" *ngIf="createError()">
+            {{ createError() }}
+          </div>
+
           <div class="form-group">
             <label class="form-label">Name</label>
             <input
@@ -66,6 +75,7 @@ import { Workspace } from '../../../shared/models/workspace.model';
               [(ngModel)]="newWorkspaceName"
               required
               placeholder="e.g., Placement Prep"
+              [disabled]="isCreating()"
             />
           </div>
           <div class="form-group">
@@ -75,14 +85,15 @@ import { Workspace } from '../../../shared/models/workspace.model';
               class="input-field textarea"
               [(ngModel)]="newWorkspaceDesc"
               placeholder="e.g., DSA and System Design interview prep"
+              [disabled]="isCreating()"
             ></textarea>
           </div>
           <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" (click)="showModal.set(false)">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()" [disabled]="isCreating()">
               Cancel
             </button>
-            <button type="submit" class="btn btn-primary" [disabled]="!newWorkspaceName.trim()">
-              Create
+            <button type="submit" class="btn btn-primary" [disabled]="!newWorkspaceName.trim() || isCreating()">
+              {{ isCreating() ? 'Creating...' : 'Create' }}
             </button>
           </div>
         </form>
@@ -100,6 +111,8 @@ import { Workspace } from '../../../shared/models/workspace.model';
       justify-content: space-between;
       align-items: center;
       margin-bottom: 3rem;
+      flex-wrap: wrap;
+      gap: 1.5rem;
     }
     .welcome-title {
       font-size: 2.25rem;
@@ -193,7 +206,7 @@ import { Workspace } from '../../../shared/models/workspace.model';
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      z-index: 200;
     }
     .modal {
       width: 90%;
@@ -219,40 +232,67 @@ import { Workspace } from '../../../shared/models/workspace.model';
       gap: 0.75rem;
       margin-top: 1.5rem;
     }
+    .error-banner {
+      background-color: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--color-error);
+      color: var(--text-primary);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      margin-bottom: 1.25rem;
+      text-align: left;
+    }
   `]
 })
 export class WorkspaceListComponent implements OnInit {
   private api = inject(ApiService);
+  state = inject(WorkspaceStateService);
 
-  workspaces = signal<Workspace[]>([]);
   showModal = signal(false);
+  isCreating = signal(false);
+  createError = signal<string | null>(null);
 
   newWorkspaceName = '';
   newWorkspaceDesc = '';
 
   ngOnInit(): void {
-    this.loadWorkspaces();
+    // Only load if not already loaded to reduce API hits
+    if (this.state.workspaces().length === 0) {
+      this.state.loadWorkspaces();
+    }
   }
 
-  loadWorkspaces(): void {
-    this.api.get<{ workspaces: Workspace[] }>('/workspaces').subscribe({
-      next: (res) => this.workspaces.set(res.workspaces),
-      error: () => {}
-    });
+  openCreateModal(): void {
+    this.newWorkspaceName = '';
+    this.newWorkspaceDesc = '';
+    this.createError.set(null);
+    this.showModal.set(true);
+  }
+
+  closeCreateModal(): void {
+    if (this.isCreating()) return;
+    this.showModal.set(false);
   }
 
   onCreateWorkspace(): void {
-    if (!this.newWorkspaceName.trim()) return;
+    if (!this.newWorkspaceName.trim() || this.isCreating()) return;
+
+    this.isCreating.set(true);
+    this.createError.set(null);
 
     this.api.post<{ workspace: Workspace }>('/workspaces', {
       name: this.newWorkspaceName,
       description: this.newWorkspaceDesc
     }).subscribe({
       next: (res) => {
-        this.workspaces.update(list => [...list, res.workspace]);
-        this.showModal.set(false);
+        this.isCreating.set(false);
+        this.state.workspaces.update(list => [...list, res.workspace]);
+        this.closeCreateModal();
       },
-      error: () => {}
+      error: (err) => {
+        this.isCreating.set(false);
+        this.createError.set(err.error?.message || 'Failed to create workspace. Please try again.');
+      }
     });
   }
 }

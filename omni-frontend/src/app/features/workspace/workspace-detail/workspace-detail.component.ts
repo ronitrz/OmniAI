@@ -14,16 +14,25 @@ import { Session } from '../../../shared/models/session.model';
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
     <div class="workspace-detail-container animate-fade-in" *ngIf="workspace()">
+      <!-- Error Banner -->
+      <div class="error-banner animate-fade-in" *ngIf="errorMsg()">
+        <span>⚠️ {{ errorMsg() }}</span>
+        <button class="close-error-btn" (click)="errorMsg.set(null)">×</button>
+      </div>
+
       <!-- Workspace Header -->
       <div class="header-section">
-        <div>
-          <div class="breadcrumbs">
-            <span routerLink="/dashboard" (click)="state.clear()" class="breadcrumb-link">Workspaces</span>
-            <span class="separator">/</span>
-            <span class="current">{{ workspace()?.name }}</span>
+        <div class="header-title-container">
+          <button class="hamburger-btn" (click)="state.sidebarOpen.set(true)" title="Open Menu">☰</button>
+          <div>
+            <div class="breadcrumbs">
+              <span routerLink="/dashboard" (click)="state.clear()" class="breadcrumb-link">Workspaces</span>
+              <span class="separator">/</span>
+              <span class="current">{{ workspace()?.name }}</span>
+            </div>
+            <h1 class="ws-title">{{ workspace()?.name }}</h1>
+            <p class="ws-desc">{{ workspace()?.description || 'No description provided.' }}</p>
           </div>
-          <h1 class="ws-title">{{ workspace()?.name }}</h1>
-          <p class="ws-desc">{{ workspace()?.description || 'No description provided.' }}</p>
         </div>
         <div class="actions">
           <button class="btn btn-secondary delete-btn" (click)="onDeleteWorkspace()">
@@ -88,6 +97,8 @@ import { Session } from '../../../shared/models/session.model';
       border-bottom: 1px solid var(--border-light);
       padding-bottom: 2rem;
       margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1.5rem;
     }
     .breadcrumbs {
       display: flex;
@@ -216,6 +227,29 @@ import { Session } from '../../../shared/models/session.model';
       font-size: 0.875rem;
       margin-bottom: 1rem;
     }
+    .error-banner {
+      background-color: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--color-error);
+      color: var(--text-primary);
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .close-error-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .close-error-btn:hover {
+      color: var(--text-primary);
+    }
   `]
 })
 export class WorkspaceDetailComponent implements OnInit {
@@ -226,11 +260,13 @@ export class WorkspaceDetailComponent implements OnInit {
 
   workspace = signal<Workspace | null>(null);
   sessions = signal<Session[]>([]);
+  errorMsg = signal<string | null>(null);
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       const workspaceId = params['id'];
       if (workspaceId) {
+        this.errorMsg.set(null);
         this.state.activeWorkspaceId.set(workspaceId);
         this.state.activeSessionId.set(null);
         this.state.loadSidebarSessions(workspaceId);
@@ -241,21 +277,29 @@ export class WorkspaceDetailComponent implements OnInit {
   }
 
   loadWorkspaceDetails(id: string): void {
-    this.api.get<{ workspaces: Workspace[] }>('/workspaces').subscribe({
-      next: (res) => {
-        const found = res.workspaces.find(w => w.id === id);
-        if (found) {
-          this.workspace.set(found);
-        } else {
-          this.state.clear();
+    if (this.state.workspaces().length === 0) {
+      this.api.get<{ workspaces: Workspace[] }>('/workspaces').subscribe({
+        next: (res) => {
+          this.state.workspaces.set(res.workspaces);
+          const found = res.workspaces.find(w => w.id === id);
+          if (found) {
+            this.workspace.set(found);
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
+        },
+        error: () => {
           this.router.navigate(['/dashboard']);
         }
-      },
-      error: () => {
-        this.state.clear();
+      });
+    } else {
+      const found = this.state.workspaces().find(w => w.id === id);
+      if (found) {
+        this.workspace.set(found);
+      } else {
         this.router.navigate(['/dashboard']);
       }
-    });
+    }
   }
 
   loadSessions(workspaceId: string): void {
@@ -269,15 +313,17 @@ export class WorkspaceDetailComponent implements OnInit {
     const ws = this.workspace();
     if (!ws) return;
 
+    this.errorMsg.set(null);
     this.api.post<{ session: Session }>(`/workspaces/${ws.id}/sessions`, {
       title: 'New Conversation'
     }).subscribe({
       next: (res) => {
-        // Refresh sidebar sessions to include this new one
         this.state.loadSidebarSessions(ws.id);
         this.router.navigate(['/dashboard/session', res.session.id]);
       },
-      error: () => {}
+      error: (err) => {
+        this.errorMsg.set(err.error?.message || 'Failed to create conversation. Please try again.');
+      }
     });
   }
 
@@ -286,12 +332,16 @@ export class WorkspaceDetailComponent implements OnInit {
     if (!ws) return;
 
     if (confirm(`Are you sure you want to delete workspace "${ws.name}"? This will delete all conversations inside it.`)) {
+      this.errorMsg.set(null);
       this.api.delete(`/workspaces/${ws.id}`).subscribe({
         next: () => {
+          this.state.workspaces.update(list => list.filter(w => w.id !== ws.id));
           this.state.clear();
           this.router.navigate(['/dashboard']);
         },
-        error: () => {}
+        error: (err) => {
+          this.errorMsg.set(err.error?.message || 'Failed to delete workspace. Please try again.');
+        }
       });
     }
   }
@@ -300,6 +350,7 @@ export class WorkspaceDetailComponent implements OnInit {
     event.stopPropagation(); // Prevent card navigation trigger
 
     if (confirm('Are you sure you want to delete this conversation?')) {
+      this.errorMsg.set(null);
       this.api.delete(`/sessions/${sessionId}`).subscribe({
         next: () => {
           this.sessions.update(list => list.filter(s => s.id !== sessionId));
@@ -307,7 +358,9 @@ export class WorkspaceDetailComponent implements OnInit {
           const ws = this.workspace();
           if (ws) this.state.loadSidebarSessions(ws.id);
         },
-        error: () => {}
+        error: (err) => {
+          this.errorMsg.set(err.error?.message || 'Failed to delete conversation. Please try again.');
+        }
       });
     }
   }

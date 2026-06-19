@@ -28,6 +28,7 @@ export interface AIRequest {
   mode?: 'standard' | 'research'; // Affects system prompt selection
   maxTokens?: number;
   temperature?: number;
+  jsonMode?: boolean;  // When true, request JSON-formatted output (decoupled from temperature)
 }
 
 export interface AIResponse {

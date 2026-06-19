@@ -30,9 +30,17 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
   ],
   template: `
     <div class="chat-page-container">
+      <!-- Floating Stream Toast -->
+      <div class="toast-error animate-fade-in" *ngIf="streamError()">
+        <span class="toast-icon">⚠️</span>
+        <span class="toast-text">{{ streamError() }}</span>
+        <button class="close-toast-btn" (click)="streamError.set(null)">×</button>
+      </div>
+
       <!-- Chat Header -->
       <div class="chat-header glass">
         <div class="header-left">
+          <button class="hamburger-btn" (click)="state.sidebarOpen.set(true)" title="Open Menu">☰</button>
           <button class="back-btn" [routerLink]="['/dashboard/workspace', state.activeWorkspaceId()]">
             ← Back
           </button>
@@ -361,6 +369,36 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
       height: 4px;
       margin-top: 0.75rem;
     }
+    .toast-error {
+      position: fixed;
+      top: calc(var(--header-height) + 1rem);
+      right: 2rem;
+      background-color: rgba(239, 68, 68, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+    .close-toast-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.25rem;
+      cursor: pointer;
+      line-height: 1;
+      padding-left: 0.5rem;
+    }
+    .close-toast-btn:hover {
+      color: #fff;
+    }
   `]
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
@@ -374,6 +412,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   sessionId = signal<string | null>(null);
   sessionTitle = signal<string>('New Conversation');
+  streamError = signal<string | null>(null);
   
   // Model info Cache
   allModels = signal<ModelInfo[]>([]);
@@ -516,6 +555,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       },
       error: (err) => {
         console.error('Failed to create message:', err);
+        this.streamError.set(err.error?.message || 'Failed to send message. Please try again.');
+        setTimeout(() => this.streamError.set(null), 5000);
         this.isGenerating.set(false);
       }
     });
@@ -532,6 +573,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       },
       error: (err) => {
         console.error('SSE Stream error, falling back to HTTP polling...', err);
+        this.streamError.set('Connection lost. Switching to backup polling mode...');
+        setTimeout(() => this.streamError.set(null), 4000);
         this.startPollingFallback(messageId);
       },
       complete: () => {

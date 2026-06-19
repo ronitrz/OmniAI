@@ -179,3 +179,41 @@ body {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Mobile Responsiveness & Hamburger */
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.hamburger-btn:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.header-title-container {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: inline-flex;
+  }
+  
+  /* Reset layout margins for full-width content on mobile */
+  .main-content {
+    margin-left: 0 !important;
+  }
+}
+

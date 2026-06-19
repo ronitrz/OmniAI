@@ -1,6 +1,7 @@
 // src/app/core/services/sse.service.ts
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface SseEvent {
   event: 'model-start' | 'model-chunk' | 'model-end' | 'model-error' | 'all-complete';
@@ -16,7 +17,7 @@ export interface SseEvent {
   providedIn: 'root'
 })
 export class SseService {
-  private baseUrl = 'http://localhost:3000/api';
+  private baseUrl = environment.apiUrl;
 
   connect(messageId: string): Observable<SseEvent> {
     return new Observable<SseEvent>((subscriber) => {

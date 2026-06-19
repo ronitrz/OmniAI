@@ -120,14 +120,24 @@ export async function generateJury(req: Request, res: Response, next: NextFuncti
     }
 
     // Three-stage jury pipeline
+    console.log(`[Jury Engine] Generating verdict for Message ID: "${messageId}"`);
+    console.log(`[Jury Engine] Input user prompt: "${message.content}"`);
+    console.log(`[Jury Engine] Responses passed into extractor:\n`, JSON.stringify(message.responses, null, 2));
+
     const extraction = await extractClaims(message.content, message.responses);
+    console.log(`[Jury Engine] Extracted claims:\n`, JSON.stringify(extraction, null, 2));
+
     const scoring = calculateConfidence(extraction);
+    console.log(`[Jury Engine] Scored confidence: ${scoring.confidenceScore} (${scoring.confidenceLabel})`);
+
+    console.log(`[Jury Engine] Responses passed into synthesizer:\n`, JSON.stringify(message.responses, null, 2));
     const synthesis = await synthesizeVerdict(
       message.content,
       message.responses,
       extraction,
       scoring
     );
+    console.log(`[Jury Engine] Synthesized synthesis response:\n`, JSON.stringify(synthesis, null, 2));
 
     const juryVerdict = await prisma.juryVerdict.create({
       data: {
@@ -142,6 +152,7 @@ export async function generateJury(req: Request, res: Response, next: NextFuncti
       },
     });
 
+    console.log(`[Jury Engine] Final verdict payload created in DB:\n`, JSON.stringify(juryVerdict, null, 2));
     res.json({ juryVerdict });
   } catch (err) {
     next(err);

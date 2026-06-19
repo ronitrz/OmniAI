@@ -1,9 +1,10 @@
 // src/services/jury/extractor.ts
 // Extracts structured claims from all model responses using a fast, cheap AI call.
-// Sends all responses to Gemini Flash with a JSON schema prompt.
+// Uses a provider fallback chain: gemini → openai → deepseek → claude → any available.
 // Returns structured agreements, contradictions, and unique insights.
 
 import { providerRegistry } from '../ai/provider-registry';
+import { AIProvider } from '../ai/interfaces/ai-provider.interface';
 
 export interface ExtractionResult {
   agreements: string[];
@@ -23,12 +24,30 @@ export interface ModelResponseInput {
   content: string;
 }
 
+// Provider fallback chain for jury calls — prefer cheap/fast models
+const JURY_PROVIDER_CHAIN = ['gemini-flash', 'gpt-4o', 'deepseek-chat', 'claude-haiku'];
+
+/**
+ * Attempts to get a working provider from the fallback chain.
+ * Returns the first provider that can be resolved (real or mock).
+ */
+function getJuryProvider(): AIProvider {
+  for (const modelId of JURY_PROVIDER_CHAIN) {
+    try {
+      return providerRegistry.getProvider(modelId);
+    } catch {
+      continue;
+    }
+  }
+  throw new Error('No AI provider available for jury extraction');
+}
+
 export async function extractClaims(
   prompt: string,
   responses: ModelResponseInput[]
 ): Promise<ExtractionResult> {
-  // Filter out error responses — only process successful ones
-  const validResponses = responses.filter(r => r.content.trim().length > 50);
+  // Filter out empty/invalid responses — only process successful ones
+  const validResponses = responses.filter(r => r.content.trim().length > 2);
 
   if (validResponses.length === 0) {
     return { agreements: [], contradictions: [], uniqueInsights: [] };
@@ -87,11 +106,11 @@ Rules:
 - Use the exact modelId strings from the responses above`;
 
   try {
-    // Use Gemini (free) for extraction — cheap and fast
-    const provider = providerRegistry.getProvider('gemini-flash');
+    const provider = getJuryProvider();
     const response = await provider.generateResponse({
       prompt: extractionPrompt,
-      temperature: 0, // Deterministic output for JSON parsing
+      temperature: 0,
+      jsonMode: true,
     });
 
     return parseExtractionResponse(response.content);
@@ -108,13 +127,7 @@ Rules:
 
 function parseExtractionResponse(content: string): ExtractionResult {
   try {
-    // Strip markdown code fences if the model wrapped the JSON
-    const cleaned = content
-      .replace(/```json\n?/g, '')
-      .replace(/```\n?/g, '')
-      .trim();
-
-    const parsed = JSON.parse(cleaned);
+    const parsed = tryParseJSON(content);
 
     return {
       agreements: Array.isArray(parsed.agreements) ? parsed.agreements.slice(0, 5) : [],
@@ -129,4 +142,36 @@ function parseExtractionResponse(content: string): ExtractionResult {
       uniqueInsights: [],
     };
   }
+}
+
+/**
+ * Robust JSON parsing with multiple fallback strategies:
+ * 1. Direct parse
+ * 2. Strip markdown code fences and parse
+ * 3. Extract JSON object from mixed content via regex
+ */
+function tryParseJSON(content: string): any {
+  // Strategy 1: Direct parse
+  try {
+    return JSON.parse(content.trim());
+  } catch { /* continue */ }
+
+  // Strategy 2: Strip markdown code fences
+  const cleaned = content
+    .replace(/```json\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch { /* continue */ }
+
+  // Strategy 3: Regex extraction — find the first { ... } block
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch { /* continue */ }
+  }
+
+  throw new Error('Could not parse JSON from response');
 }
