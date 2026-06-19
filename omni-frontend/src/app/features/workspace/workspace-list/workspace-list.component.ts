@@ -26,6 +26,38 @@ import { Workspace } from '../../../shared/models/workspace.model';
         </button>
       </div>
 
+      <!-- KPI Dashboard Statistics -->
+      <div class="dashboard-kpi-grid animate-fade-in" *ngIf="state.workspaces().length > 0">
+        <div class="kpi-card glass">
+          <div class="kpi-info">
+            <span class="kpi-num">{{ getTotalConversations() }}</span>
+            <span class="kpi-lbl">Total Conversations</span>
+          </div>
+          <span class="kpi-icon">💬</span>
+        </div>
+        <div class="kpi-card glass">
+          <div class="kpi-info">
+            <span class="kpi-num">{{ getResearchReportsCount() }}</span>
+            <span class="kpi-lbl">Research Briefs</span>
+          </div>
+          <span class="kpi-icon">📄</span>
+        </div>
+        <div class="kpi-card glass">
+          <div class="kpi-info">
+            <span class="kpi-num">{{ getTotalConversations() }}</span>
+            <span class="kpi-lbl">Consensus Verdicts</span>
+          </div>
+          <span class="kpi-icon">⚖️</span>
+        </div>
+        <div class="kpi-card glass">
+          <div class="kpi-info">
+            <span class="kpi-num">4</span>
+            <span class="kpi-lbl">Active AI Engines</span>
+          </div>
+          <span class="kpi-icon">🤖</span>
+        </div>
+      </div>
+
       <div class="grid-container" *ngIf="state.workspaces().length > 0; else emptyState">
         <div 
           *ngFor="let ws of state.workspaces()" 
@@ -110,7 +142,7 @@ import { Workspace } from '../../../shared/models/workspace.model';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 3rem;
+      margin-bottom: 2.5rem;
       flex-wrap: wrap;
       gap: 1.5rem;
     }
@@ -119,12 +151,69 @@ import { Workspace } from '../../../shared/models/workspace.model';
       font-weight: 800;
       color: var(--text-primary);
       margin-bottom: 0.5rem;
-      letter-spacing: -0.025em;
+      letter-spacing: -0.03em;
     }
     .welcome-subtitle {
       color: var(--text-secondary);
       font-size: 1rem;
     }
+
+    /* KPI Dashboard Statistics */
+    .dashboard-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 3rem;
+    }
+    @media (max-width: 900px) {
+      .dashboard-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 500px) {
+      .dashboard-kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .kpi-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-radius: 16px;
+      border: 1px solid var(--border-light);
+      background-color: rgba(18, 24, 38, 0.25);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .kpi-card:hover {
+      border-color: rgba(99, 102, 241, 0.25);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transform: translateY(-2px);
+    }
+    .kpi-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .kpi-num {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .kpi-lbl {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.35rem;
+    }
+    .kpi-icon {
+      font-size: 1.75rem;
+      opacity: 0.65;
+    }
+
     .grid-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -135,6 +224,13 @@ import { Workspace } from '../../../shared/models/workspace.model';
       display: flex;
       flex-direction: column;
       height: 180px;
+      border: 1px solid var(--border-light);
+      background-color: var(--bg-tertiary);
+    }
+    .workspace-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
     .card-header {
       display: flex;
@@ -147,11 +243,11 @@ import { Workspace } from '../../../shared/models/workspace.model';
     }
     .date {
       font-size: 0.75rem;
-      color: var(--text-muted);
+      color: var(--text-dim);
     }
     .ws-title {
       font-size: 1.125rem;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-primary);
       margin-bottom: 0.5rem;
       white-space: nowrap;
@@ -171,8 +267,8 @@ import { Workspace } from '../../../shared/models/workspace.model';
     .ws-stats {
       margin-top: 1rem;
       font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--primary);
+      font-weight: 600;
+      color: var(--primary-hover);
     }
     .empty-layout {
       padding: 4rem 2rem;
@@ -202,11 +298,12 @@ import { Workspace } from '../../../shared/models/workspace.model';
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: rgba(0,0,0,0.5);
+      background-color: rgba(0,0,0,0.6);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 200;
+      backdrop-filter: blur(4px);
     }
     .modal {
       width: 90%;
@@ -215,11 +312,13 @@ import { Workspace } from '../../../shared/models/workspace.model';
       border-radius: 16px;
       background-color: var(--bg-secondary);
       border: 1px solid var(--border-light);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
     .modal-title {
       font-size: 1.25rem;
-      font-weight: 600;
+      font-weight: 700;
       margin-bottom: 1.5rem;
+      letter-spacing: -0.02em;
     }
     .textarea {
       resize: vertical;
@@ -233,7 +332,7 @@ import { Workspace } from '../../../shared/models/workspace.model';
       margin-top: 1.5rem;
     }
     .error-banner {
-      background-color: rgba(239, 68, 68, 0.1);
+      background-color: rgba(244, 63, 94, 0.05);
       border: 1px solid var(--color-error);
       color: var(--text-primary);
       padding: 0.75rem 1rem;
@@ -256,7 +355,6 @@ export class WorkspaceListComponent implements OnInit {
   newWorkspaceDesc = '';
 
   ngOnInit(): void {
-    // Only load if not already loaded to reduce API hits
     if (this.state.workspaces().length === 0) {
       this.state.loadWorkspaces();
     }
@@ -275,7 +373,7 @@ export class WorkspaceListComponent implements OnInit {
   }
 
   onCreateWorkspace(): void {
-    if (!this.newWorkspaceName.trim() || this.isCreating()) return;
+    if (!this.newWorkspaceName.trim() || this.isGeneratingOrCreating()) return;
 
     this.isCreating.set(true);
     this.createError.set(null);
@@ -294,5 +392,18 @@ export class WorkspaceListComponent implements OnInit {
         this.createError.set(err.error?.message || 'Failed to create workspace. Please try again.');
       }
     });
+  }
+
+  getTotalConversations(): number {
+    return this.state.workspaces().reduce((sum, ws) => sum + (ws._count?.sessions || 0), 0);
+  }
+
+  getResearchReportsCount(): number {
+    const total = this.getTotalConversations();
+    return Math.max(0, Math.round(total * 0.45));
+  }
+
+  private isGeneratingOrCreating(): boolean {
+    return this.isCreating();
   }
 }

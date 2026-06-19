@@ -12,6 +12,7 @@ import { ModelInfo } from '../model-selector/model-selector.component';
     <div class="grid-layout" [ngClass]="gridClass">
       <div *ngFor="let model of selectedModels" class="grid-item">
         <app-response-card
+          [modelId]="model.id"
           [displayName]="model.displayName"
           [color]="model.color"
           [tier]="model.tier"

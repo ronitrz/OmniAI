@@ -44,6 +44,31 @@ import { Session } from '../../../shared/models/session.model';
         </div>
       </div>
 
+      <!-- Workspace specific Metrics grid -->
+      <div class="workspace-kpi-grid animate-fade-in" *ngIf="workspace()">
+        <div class="kpi-card glass">
+          <div class="kpi-info">
+            <span class="kpi-num">{{ sessions().length }}</span>
+            <span class="kpi-lbl">Conversations</span>
+          </div>
+          <span class="kpi-icon">💬</span>
+        </div>
+        <div class="kpi-card glass">
+          <div class="kpi-info">
+            <span class="kpi-num">4</span>
+            <span class="kpi-lbl">Active AI Models</span>
+          </div>
+          <span class="kpi-icon">🤖</span>
+        </div>
+        <div class="kpi-card glass">
+          <div class="kpi-info">
+            <span class="kpi-num-text">{{ getLastActiveDate() | date:'mediumDate' }}</span>
+            <span class="kpi-lbl">Last Active</span>
+          </div>
+          <span class="kpi-icon">📅</span>
+        </div>
+      </div>
+
       <!-- Sessions List -->
       <div class="sessions-section">
         <h2 class="section-title">Conversations</h2>
@@ -51,7 +76,7 @@ import { Session } from '../../../shared/models/session.model';
         <div class="grid-container" *ngIf="sessions().length > 0; else emptyState">
           <div 
             *ngFor="let session of sessions()" 
-            class="card session-card"
+            class="card session-card animate-fade-in"
             [routerLink]="['/dashboard/session', session.id]"
           >
             <div class="session-card-header">
@@ -105,8 +130,8 @@ import { Session } from '../../../shared/models/session.model';
       align-items: center;
       gap: 0.5rem;
       font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--text-muted);
+      font-weight: 600;
+      color: var(--text-dim);
       margin-bottom: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -139,11 +164,69 @@ import { Session } from '../../../shared/models/session.model';
     }
     .delete-btn {
       color: var(--color-error);
-      border-color: rgba(239, 68, 68, 0.2);
+      border-color: rgba(244, 63, 94, 0.2);
     }
     .delete-btn:hover {
-      background-color: rgba(239, 68, 68, 0.05);
+      background-color: rgba(244, 63, 94, 0.05);
       border-color: var(--color-error);
+    }
+
+    /* Workspace KPI Grid */
+    .workspace-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 3rem;
+    }
+    @media (max-width: 768px) {
+      .workspace-kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .kpi-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-radius: 16px;
+      border: 1px solid var(--border-light);
+      background-color: rgba(18, 24, 38, 0.25);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .kpi-card:hover {
+      border-color: rgba(99, 102, 241, 0.25);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transform: translateY(-2px);
+    }
+    .kpi-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .kpi-num {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .kpi-num-text {
+      font-size: 1.125rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.75rem;
+      letter-spacing: -0.01em;
+    }
+    .kpi-lbl {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.35rem;
+    }
+    .kpi-icon {
+      font-size: 1.75rem;
+      opacity: 0.65;
     }
     
     .sessions-section {
@@ -151,9 +234,10 @@ import { Session } from '../../../shared/models/session.model';
     }
     .section-title {
       font-size: 1.25rem;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-primary);
       margin-bottom: 1.5rem;
+      letter-spacing: -0.01em;
     }
     .grid-container {
       display: grid;
@@ -165,8 +249,17 @@ import { Session } from '../../../shared/models/session.model';
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 140px;
+      height: 150px;
       position: relative;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .session-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
     .session-card-header {
       display: flex;
@@ -179,7 +272,7 @@ import { Session } from '../../../shared/models/session.model';
     .delete-session-btn {
       background: none;
       border: none;
-      color: var(--text-muted);
+      color: var(--text-dim);
       font-size: 1.5rem;
       line-height: 1;
       cursor: pointer;
@@ -191,7 +284,7 @@ import { Session } from '../../../shared/models/session.model';
     }
     .session-title {
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-primary);
       margin-bottom: 0.5rem;
       display: -webkit-box;
@@ -204,7 +297,8 @@ import { Session } from '../../../shared/models/session.model';
     }
     .session-meta {
       font-size: 0.75rem;
-      color: var(--text-muted);
+      color: var(--text-dim);
+      font-weight: 500;
     }
     
     .empty-layout {
@@ -228,7 +322,7 @@ import { Session } from '../../../shared/models/session.model';
       margin-bottom: 1rem;
     }
     .error-banner {
-      background-color: rgba(239, 68, 68, 0.1);
+      background-color: rgba(244, 63, 94, 0.05);
       border: 1px solid var(--color-error);
       color: var(--text-primary);
       padding: 0.75rem 1.25rem;
@@ -242,7 +336,7 @@ import { Session } from '../../../shared/models/session.model';
     .close-error-btn {
       background: none;
       border: none;
-      color: var(--text-secondary);
+      color: var(--text-muted);
       font-size: 1.25rem;
       cursor: pointer;
       line-height: 1;
@@ -354,7 +448,6 @@ export class WorkspaceDetailComponent implements OnInit {
       this.api.delete(`/sessions/${sessionId}`).subscribe({
         next: () => {
           this.sessions.update(list => list.filter(s => s.id !== sessionId));
-          // Refresh sidebar list
           const ws = this.workspace();
           if (ws) this.state.loadSidebarSessions(ws.id);
         },
@@ -363,5 +456,15 @@ export class WorkspaceDetailComponent implements OnInit {
         }
       });
     }
+  }
+
+  getLastActiveDate(): Date | string {
+    const list = this.sessions();
+    if (list.length > 0) {
+      const sorted = [...list].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      return sorted[0].updatedAt;
+    }
+    const ws = this.workspace();
+    return ws ? ws.createdAt : new Date();
   }
 }

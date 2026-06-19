@@ -2,7 +2,7 @@
 import { Component, inject, signal, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, finalize } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { ApiService } from '../../core/services/api.service';
 import { SseService, SseEvent } from '../../core/services/sse.service';
@@ -15,7 +15,6 @@ import { ResearchReportComponent } from './research-report/research-report.compo
 import { CardStreamState } from './response-card/response-card.component';
 import { JuryVerdict } from '../../shared/models/verdict.model';
 import { Message, ModelResponse } from '../../shared/models/message.model';
-import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-chat',
@@ -76,17 +75,38 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
               </div>
             </div>
 
-            <!-- Assistant responses (Standard Grid) -->
+            <!-- Assistant responses (Standard Grid or Research Layout) -->
             <div class="assistant-responses-row" *ngIf="msg.role === 'assistant' || (msg.role === 'user' && msg.responses?.length)">
-              <!-- If standard mode, show grid of response cards -->
-              <div *ngIf="msg.mode !== 'research'">
-                <app-response-grid
-                  [selectedModels]="getModelsInfoForResponses(msg.responses)"
-                  [streamStates]="getStreamStatesFromResponses(msg.responses)"
-                ></app-response-grid>
+              
+              <!-- Segmented View Tabs (Only when juryVerdict is present and not research mode) -->
+              <div class="session-tab-header" *ngIf="msg.juryVerdict && msg.mode !== 'research'">
+                <button 
+                  type="button" 
+                  class="session-tab-btn" 
+                  [class.active]="getActiveTab(msg.id) === 'responses'"
+                  (click)="setActiveTab(msg.id, 'responses')"
+                >
+                  💬 Responses
+                </button>
+                <button 
+                  type="button" 
+                  class="session-tab-btn" 
+                  [class.active]="getActiveTab(msg.id) === 'consensus'"
+                  (click)="setActiveTab(msg.id, 'consensus')"
+                >
+                  ⚖️ Jury Verdict
+                </button>
+                <button 
+                  type="button" 
+                  class="session-tab-btn" 
+                  [class.active]="getActiveTab(msg.id) === 'compare'"
+                  (click)="setActiveTab(msg.id, 'compare')"
+                >
+                  📊 Compare Matrix
+                </button>
               </div>
 
-              <!-- If research mode, show single document layout -->
+              <!-- Content body depending on Mode / Active Tab -->
               <div *ngIf="msg.mode === 'research'">
                 <app-research-report
                   [selectedModels]="getModelsInfoForResponses(msg.responses)"
@@ -94,18 +114,76 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
                 ></app-research-report>
               </div>
 
-              <!-- Jury Verdict for this specific message exchanged -->
-              <app-jury-verdict
-                *ngIf="msg.juryVerdict"
-                [verdict]="msg.juryVerdict"
-                [modelsInfo]="allModels()"
-              ></app-jury-verdict>
+              <div *ngIf="msg.mode !== 'research'">
+                <!-- Tab 1: Responses Grid -->
+                <div *ngIf="!msg.juryVerdict || getActiveTab(msg.id) === 'responses'" class="tab-content-wrapper animate-fade-in">
+                  <app-response-grid
+                    [selectedModels]="getModelsInfoForResponses(msg.responses)"
+                    [streamStates]="getStreamStatesFromResponses(msg.responses)"
+                  ></app-response-grid>
+                </div>
+
+                <!-- Tab 2: Jury Verdict dashboard -->
+                <div *ngIf="msg.juryVerdict && getActiveTab(msg.id) === 'consensus'" class="tab-content-wrapper animate-fade-in">
+                  <app-jury-verdict
+                    [verdict]="msg.juryVerdict"
+                    [modelsInfo]="allModels()"
+                  ></app-jury-verdict>
+                </div>
+
+                <!-- Tab 3: Comparison Matrix Table -->
+                <div *ngIf="msg.juryVerdict && getActiveTab(msg.id) === 'compare'" class="tab-content-wrapper animate-fade-in">
+                  <div class="comparison-view card glass">
+                    <h3 class="comparison-title">Model Response Comparison</h3>
+                    <div class="table-container">
+                      <table class="comparison-table">
+                        <thead>
+                          <tr>
+                            <th>Model Name</th>
+                            <th>Tier / Latency</th>
+                            <th>Core Summary</th>
+                            <th>Unique Insight</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let modelResponse of msg.responses">
+                            <td class="model-cell">
+                              <div class="model-meta">
+                                <span class="model-avatar" [style.background]="getAvatarGradient(modelResponse.modelId)">
+                                  {{ getModelDisplayName(modelResponse.modelId).slice(0, 2).toUpperCase() }}
+                                </span>
+                                <span class="model-name">{{ getModelDisplayName(modelResponse.modelId) }}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <span class="badge-capsule" [class.live]="modelResponse.status === 'success'" [class.demo]="modelResponse.isMock">
+                                {{ modelResponse.isMock ? 'DEMO' : 'LIVE' }}
+                              </span>
+                              <span class="latency" *ngIf="modelResponse.latencyMs">
+                                {{ (modelResponse.latencyMs / 1000).toFixed(2) }}s
+                              </span>
+                            </td>
+                            <td>
+                              <p class="summary-text">{{ getCoreSummary(modelResponse.content) }}</p>
+                            </td>
+                            <td>
+                              <p class="insight-text">
+                                {{ getModelUniqueInsight(msg.juryVerdict, modelResponse.modelId) || 'Included in main consensus agreements' }}
+                              </p>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           <!-- Active/Current Streaming Turn -->
           <div class="message-group active-turn animate-fade-in" *ngIf="isGenerating() || verdictLoading()">
-            <!-- Current Prompt (represented in active streaming states) -->
+            <!-- Current Prompt -->
             <div class="user-message-row">
               <div class="avatar user">U</div>
               <div class="content-bubble user">
@@ -129,15 +207,17 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
               ></app-research-report>
             </div>
 
-            <!-- Deliberating / Deliberation Loader -->
-            <div class="verdict-loading-card card glass animate-fade-in" *ngIf="verdictLoading()">
+            <!-- Redesigned Deliberating loader -->
+            <div class="verdict-loading-card glass animate-fade-in" *ngIf="verdictLoading()">
               <div class="loader-content">
                 <span class="deliberation-icon">⚖️</span>
                 <div class="loader-text">
                   <h3>Jury Deliberating Consensus</h3>
-                  <p>Extracting claims, calculating confidence score, and synthesizing final recommendation...</p>
+                  <p>Resolving contradictions, parsing models' claims, and synthesizing final recommendations...</p>
                 </div>
-                <div class="shimmer loader-bar"></div>
+                <div class="loader-progress-container">
+                  <div class="loader-progress-bar"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -183,7 +263,7 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
     .back-btn {
       background: none;
       border: 1px solid var(--border-light);
-      border-radius: 6px;
+      border-radius: 8px;
       color: var(--text-secondary);
       font-size: 0.8125rem;
       font-weight: 500;
@@ -193,6 +273,7 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
     }
     .back-btn:hover {
       background-color: var(--bg-tertiary);
+      border-color: var(--border-hover);
       color: var(--text-primary);
     }
     .session-info {
@@ -327,53 +408,12 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
       box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.3);
     }
     
-    /* Verdict Loader Card */
-    .verdict-loading-card {
-      padding: 1.5rem;
-      border-radius: 16px;
-      margin-top: 1.5rem;
-      border-color: rgba(99, 102, 241, 0.1);
-    }
-    .loader-content {
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-      position: relative;
-      flex-wrap: wrap;
-    }
-    .deliberation-icon {
-      font-size: 2rem;
-      animation: spin-tilt 3s infinite linear;
-    }
-    @keyframes spin-tilt {
-      0% { transform: rotate(0deg); }
-      25% { transform: rotate(10deg); }
-      75% { transform: rotate(-10deg); }
-      100% { transform: rotate(0deg); }
-    }
-    .loader-text {
-      flex: 1;
-    }
-    .loader-text h3 {
-      font-size: 0.9375rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 0.25rem;
-    }
-    .loader-text p {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-    }
-    .loader-bar {
-      width: 100%;
-      height: 4px;
-      margin-top: 0.75rem;
-    }
+    /* Floating Error Toast */
     .toast-error {
       position: fixed;
       top: calc(var(--header-height) + 1rem);
       right: 2rem;
-      background-color: rgba(239, 68, 68, 0.95);
+      background-color: rgba(244, 63, 94, 0.95);
       backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
@@ -398,6 +438,211 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
     }
     .close-toast-btn:hover {
       color: #fff;
+    }
+
+    /* Segmented view switcher inside messaging */
+    .session-tab-header {
+      display: flex;
+      background-color: rgba(3, 7, 18, 0.4);
+      padding: 0.25rem;
+      border-radius: 10px;
+      gap: 0.25rem;
+      width: fit-content;
+      margin-bottom: 0.25rem;
+      border: 1px solid var(--border-light);
+    }
+    
+    .session-tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.4rem 0.875rem;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    
+    .session-tab-btn:hover {
+      color: var(--text-primary);
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    
+    .session-tab-btn.active {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Redesigned Deliberation Loader */
+    .verdict-loading-card {
+      padding: 2.25rem;
+      border-radius: 20px;
+      margin-top: 1.5rem;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(3, 7, 18, 0.45) 100%);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+    .loader-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 1.25rem;
+    }
+    .deliberation-icon {
+      font-size: 2.5rem;
+      animation: spin-tilt 3s infinite linear;
+    }
+    @keyframes spin-tilt {
+      0% { transform: rotate(0deg); }
+      25% { transform: rotate(10deg); }
+      75% { transform: rotate(-10deg); }
+      100% { transform: rotate(0deg); }
+    }
+    .loader-text h3 {
+      font-size: 1.125rem;
+      font-weight: 750;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+    .loader-text p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      max-width: 500px;
+      line-height: 1.5;
+    }
+    .loader-progress-container {
+      width: 100%;
+      max-width: 320px;
+      height: 4px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+      position: relative;
+    }
+    .loader-progress-bar {
+      height: 100%;
+      width: 40%;
+      background: linear-gradient(to right, var(--primary), var(--primary-hover));
+      border-radius: 9999px;
+      animation: sweep 1.5s infinite ease-in-out;
+    }
+    @keyframes sweep {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(250%); }
+    }
+
+    /* Comparison View Card Styles */
+    .comparison-view {
+      padding: 2rem;
+      border-radius: 18px;
+      border: 1px solid var(--border-light);
+      background: linear-gradient(135deg, rgba(17, 24, 39, 0.3) 0%, rgba(11, 15, 25, 0.3) 100%);
+    }
+    .comparison-title {
+      font-size: 1.125rem;
+      font-weight: 750;
+      color: var(--text-primary);
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.01em;
+    }
+    .table-container {
+      overflow-x: auto;
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      background-color: rgba(3, 7, 18, 0.3);
+    }
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.8125rem;
+    }
+    .comparison-table th {
+      background-color: rgba(0, 0, 0, 0.3);
+      color: var(--text-muted);
+      font-weight: 700;
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-light);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.6875rem;
+    }
+    .comparison-table td {
+      padding: 1.125rem 1.25rem;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-secondary);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+    .model-cell {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .model-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .comparison-table .model-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: inset 0 1px rgba(255,255,255,0.15), 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .comparison-table .model-name {
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+    .comparison-table .badge-capsule {
+      display: inline-flex;
+      font-size: 0.625rem;
+      font-weight: 700;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      border: 1px solid transparent;
+      letter-spacing: 0.05em;
+    }
+    .comparison-table .badge-capsule.live {
+      background-color: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.2);
+      color: var(--color-live);
+    }
+    .comparison-table .badge-capsule.demo {
+      background-color: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.2);
+      color: var(--color-demo);
+    }
+    .comparison-table .latency {
+      font-size: 0.75rem;
+      color: var(--primary-hover);
+      margin-left: 0.5rem;
+      font-weight: 600;
+    }
+    .comparison-table .summary-text {
+      color: var(--text-secondary);
+    }
+    .comparison-table .insight-text {
+      color: var(--text-muted);
+      font-style: italic;
     }
   `]
 })
@@ -429,6 +674,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   verdictLoading = signal<boolean>(false);
   currentPromptText = signal<string>('');
   activeStreamStates = signal<Record<string, CardStreamState>>({});
+
+  // Active Tab state for each message ID
+  activeTabsMap: Record<string, 'responses' | 'consensus' | 'compare'> = {};
   
   // Polling fallback configuration
   private pollingIntervalId: any = null;
@@ -732,5 +980,60 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       };
     }
     return states;
+  }
+
+  // ── Tab Management per Message Row ───────────────────────────
+  getActiveTab(msgId: string): 'responses' | 'consensus' | 'compare' {
+    return this.activeTabsMap[msgId] || 'responses';
+  }
+
+  setActiveTab(msgId: string, tab: 'responses' | 'consensus' | 'compare'): void {
+    this.activeTabsMap[msgId] = tab;
+  }
+
+  getAvatarGradient(modelId: string): string {
+    if (modelId === 'gpt-4o') {
+      return 'linear-gradient(135deg, #10a37f 0%, #15803d 100%)';
+    }
+    if (modelId === 'gemini-flash') {
+      return 'linear-gradient(135deg, #4285f4 0%, #7c3aed 100%)';
+    }
+    if (modelId === 'claude-haiku') {
+      return 'linear-gradient(135deg, #d97706 0%, #b45309 100%)';
+    }
+    if (modelId === 'deepseek-chat') {
+      return 'linear-gradient(135deg, #0ea5e9 0%, #1e40af 100%)';
+    }
+    return 'linear-gradient(135deg, #6366f1 0%, #000 100%)';
+  }
+
+  getModelDisplayName(modelId: string): string {
+    const found = this.allModels().find(m => m.id === modelId);
+    return found ? found.displayName : modelId;
+  }
+
+  getCoreSummary(content: string): string {
+    if (!content) return '';
+    // Clean markdown content to yield a plain text summary
+    const clean = content
+      .replace(/#+\s+[^\n]+/g, '') // remove headers
+      .replace(/\*\*|__/g, '') // remove bold
+      .replace(/`[^`]+`/g, '') // remove code
+      .replace(/```[\s\S]+?```/g, '') // remove block code
+      .replace(/^[*\-]\s+/gm, '') // remove bullets
+      .replace(/<[^>]+>/g, '') // remove HTML
+      .replace(/\s+/g, ' ') // normalize whitespace
+      .trim();
+
+    if (clean.length > 150) {
+      return clean.slice(0, 147) + '...';
+    }
+    return clean;
+  }
+
+  getModelUniqueInsight(verdict: JuryVerdict | null, modelId: string): string {
+    if (!verdict || !verdict.uniqueInsights) return '';
+    const found = verdict.uniqueInsights.find(ui => ui.modelId === modelId);
+    return found ? found.insight : '';
   }
 }
