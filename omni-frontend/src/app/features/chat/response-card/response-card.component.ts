@@ -1,5 +1,5 @@
 // src/app/features/chat/response-card/response-card.component.ts
-import { Component, Input, signal } from '@angular/core';
+import { Component, Input, signal, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
@@ -75,12 +75,18 @@ export interface CardStreamState {
           <div class="shimmer skeleton-line w-2-3"></div>
         </div>
 
-        <!-- Rendered Markdown Content -->
-        <div 
-          class="markdown-content" 
-          *ngIf="state.content" 
-          [innerHTML]="state.content | markdown"
+        <!-- Rendered Markdown Content (with shared phrase highlights if available) -->
+        <div
+          class="markdown-content"
+          *ngIf="state.content"
+          [innerHTML]="highlightedHtml || (state.content | markdown)"
         ></div>
+
+        <!-- Shared highlights legend -->
+        <div class="shared-legend" *ngIf="sharedPhrases.length > 0 && state.status === 'complete' && state.content">
+          <span class="legend-dot"></span>
+          <span class="legend-text">Highlighted text appears in multiple model responses</span>
+        </div>
 
         <!-- Bouncing Dot Typing Indicator when streaming -->
         <div class="typing-indicator" *ngIf="state.status === 'streaming' && state.content">
@@ -373,6 +379,42 @@ export interface CardStreamState {
     .light-theme .markdown-content ::ng-deep code {
       background-color: rgba(0, 0, 0, 0.04);
     }
+
+    /* Shared phrase highlight */
+    .markdown-content ::ng-deep .shared-highlight {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.10));
+      border-radius: 3px;
+      padding: 0.05em 0.15em;
+      border-bottom: 1.5px solid rgba(16, 185, 129, 0.5);
+      color: inherit;
+    }
+    .light-theme .markdown-content ::ng-deep .shared-highlight {
+      background: rgba(16, 185, 129, 0.12);
+      border-bottom-color: rgba(16, 185, 129, 0.4);
+    }
+
+    /* Shared phrases legend */
+    .shared-legend {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-light);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.5), rgba(16, 185, 129, 0.3));
+      border: 1.5px solid rgba(16, 185, 129, 0.5);
+    }
+    .legend-text {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-style: italic;
+    }
     
     /* Bouncing dot indicator */
     .typing-indicator {
@@ -428,14 +470,62 @@ export interface CardStreamState {
     }
   `]
 })
-export class ResponseCardComponent {
+export class ResponseCardComponent implements OnChanges {
   @Input() modelId: string = '';
   @Input() displayName: string = '';
   @Input() color: string = '#6366f1';
   @Input() tier: 'live' | 'demo' = 'demo';
   @Input() state: CardStreamState = { status: 'idle', content: '' };
+  @Input() sharedPhrases: string[] = [];
 
   copied = signal(false);
+  highlightedHtml: string | null = null;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['sharedPhrases'] || changes['state']) {
+      this.rebuildHighlightedHtml();
+    }
+  }
+
+  private rebuildHighlightedHtml(): void {
+    if (!this.state.content || this.sharedPhrases.length === 0) {
+      this.highlightedHtml = null;
+      return;
+    }
+    // Use the markdown pipe logic inline to first convert to HTML, then highlight
+    // We'll highlight on the raw markdown text level to avoid breaking HTML tags
+    let text = this.state.content;
+    const sorted = [...this.sharedPhrases].sort((a, b) => b.length - a.length);
+    for (const phrase of sorted) {
+      if (phrase.length < 15) continue; // skip very short phrases
+      const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escaped})`, 'gi');
+      text = text.replace(regex, '==HIGHLIGHT_START==$1==HIGHLIGHT_END==');
+    }
+    // Convert to HTML via simple markdown-like rendering then restore highlights
+    // We render highlights as mark tags which survive plain text rendering
+    text = text
+      .replace(/==HIGHLIGHT_START==/g, '<mark class="shared-highlight">')
+      .replace(/==HIGHLIGHT_END==/g, '</mark>');
+    this.highlightedHtml = this.renderMarkdownWithHighlights(text);
+  }
+
+  private renderMarkdownWithHighlights(text: string): string {
+    // Minimal markdown rendering that preserves <mark> tags
+    return text
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+      .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+      .replace(/\n{2,}/g, '</p><p>')
+      .replace(/\n/g, '<br>')
+      .replace(/^(?!<[hul])(.+)$/gm, (m) => m.startsWith('<') ? m : `<p>${m}</p>`);
+  }
 
   copyToClipboard(): void {
     if (!this.state.content) return;

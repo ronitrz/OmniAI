@@ -604,24 +604,44 @@ function mockJurySynthesis(prompt: string): string {
   const mathEval = evaluateMathPrompt(question);
   if (mathEval) {
     return JSON.stringify({
-      consensusText: `There is complete consensus among all evaluated models that ${mathEval.expr} equals ${mathEval.result}. The models reached this conclusion using standard arithmetic principles in the decimal system, confirming the result as a stable mathematical constant. There are no contradictions or dissenting opinions between the models.`,
-      recommendation: `Accept ${mathEval.result} as the correct mathematical answer.`
+      consensusText: `## Result\n\nThe answer to **${mathEval.expr}** is **${mathEval.result}**.\n\n## Explanation\n\nThis is a straightforward arithmetic computation using standard mathematical rules. The expression \`${mathEval.expr}\` is evaluated using the conventional order of operations (BODMAS/PEMDAS):\n\n- **Step 1**: Identify the operations involved\n- **Step 2**: Apply arithmetic rules in correct order\n- **Result**: \`${mathEval.result}\`\n\nThis value is universally accepted and deterministic — there is no ambiguity or interpretation required. Mathematical expressions of this kind have exactly one correct answer.\n\n## Key Takeaway\n\n**${mathEval.result}** is the definitive, exact result of this computation.`,
+      recommendation: `Use ${mathEval.result} as the definitive answer — this is a mathematical constant with no ambiguity.`
     }, null, 2);
   }
 
-  // Check if it's general knowledge or general queries
-  const gkResponse = generatePromptAwareResponse(question, 'gpt-4o');
-  let answerText = `resolving "${question}"`;
-  if (gkResponse) {
-    const boldMatch = gkResponse.match(/\*\*(.*?)\*\*/);
-    if (boldMatch) answerText = `the answer is ${boldMatch[1]}`;
+  // Check if it's a capital city query
+  const { words } = normalizePrompt(question);
+  const isCapital = words.includes('capital');
+  const countryKey = isCapital ? Object.keys(CAPITALS).find(c => words.includes(c) || question.toLowerCase().includes(c)) : null;
+  if (isCapital && countryKey) {
+    const capital = CAPITALS[countryKey];
+    const country = countryKey.charAt(0).toUpperCase() + countryKey.slice(1);
+    return JSON.stringify({
+      consensusText: `## Capital of ${country}\n\nThe capital of **${country}** is **${capital}**.\n\n## Overview\n\n**${capital}** serves as the official political, administrative, and cultural capital of ${country}. As the seat of the national government, it houses the country's executive, legislative, and judicial institutions.\n\n### Key Facts\n- **Official Status**: National capital and seat of government\n- **Role**: Administrative, political, and often economic hub\n- **Significance**: Primary city through which national policy and diplomacy are conducted\n\n## Historical Context\n\n${capital} has played a central role in ${country}'s history, serving as the command center for national leadership across different political periods. Its status as capital is constitutionally recognized.\n\n## Why It Matters\n\nKnowing a country's capital is foundational for geography, political science, and international relations. **${capital}** is the correct and authoritative answer.`,
+      recommendation: `Remember that ${capital} is the official, constitutionally recognized capital of ${country} — this is a definitive geographical fact.`
+    }, null, 2);
   }
 
+  // Check for technology topics
+  const techKey = Object.keys(TECH_INFO).find(k => words.includes(k) || question.toLowerCase().includes(k));
+  if (techKey) {
+    const tech = TECH_INFO[techKey];
+    return JSON.stringify({
+      consensusText: `## ${tech.name}\n\n**${tech.name}** is ${tech.definition}\n\n## Core Concepts\n\n${tech.details}\n\n### Why It Matters\n\n${tech.name} has become a foundational technology in modern software development. Its widespread adoption is driven by performance, developer experience, and ecosystem maturity.\n\n### Common Use Cases\n\n- **Web Applications**: Building scalable, maintainable interfaces and services\n- **Enterprise Systems**: Large-scale deployments where reliability and structure are critical\n- **Developer Productivity**: Tools that reduce boilerplate and accelerate development cycles\n\n## Trade-offs to Consider\n\nWhile **${tech.name}** offers significant advantages, the best choice always depends on your team's expertise, project requirements, and long-term maintenance strategy.\n\n## Conclusion\n\n${tech.name} is a proven, production-ready solution with strong community support and a well-established ecosystem. It is a reliable default choice for most relevant use cases.`,
+      recommendation: `Evaluate ${tech.name} against your specific project requirements — its maturity and community support make it a strong default choice for most use cases.`
+    }, null, 2);
+  }
+
+  // Generic comprehensive fallback for open-ended questions
+  const subject = extractSubject(question);
+  const subjectTitle = capitalizeSubject(subject) || 'this topic';
+
   return JSON.stringify({
-    consensusText: `There is complete consensus among all evaluated models regarding "${question}". The models successfully aligned on the fact that ${answerText}, presenting highly consistent data points. No major contradictions or dissenting perspectives were recorded.`,
-    recommendation: `Use the consensus output to address "${question}" in your workflow.`
+    consensusText: `## ${subjectTitle}\n\nHere is a comprehensive, synthesized answer to: **"${question}"**\n\n## Core Answer\n\nApproaching **${subjectTitle}** requires understanding several key dimensions that together form a complete picture:\n\n- **Foundational Clarity**: A clear grasp of core concepts is the starting point for any effective solution\n- **Practical Application**: Theory must connect to real-world constraints to be genuinely useful\n- **Context Sensitivity**: The optimal answer depends on specific goals, environment, and constraints\n\n## Detailed Analysis\n\nWhen tackling **${subjectTitle}**, systematic thinking is essential. Define the problem clearly, identify the variables at play, and evaluate both short-term needs and long-term implications. Decisions that seem optimal immediately can create technical or operational debt down the road.\n\nThe principles that broadly apply here are: **modularity**, **clarity**, and **iterative improvement**. Building in small, validated steps consistently outperforms large, sweeping solutions.\n\n## Key Considerations\n\n1. **Define requirements clearly** before selecting any approach\n2. **Evaluate trade-offs** between simplicity and capability\n3. **Start with proven patterns** — deviate only with good reason\n4. **Iterate and measure** to continuously validate your approach\n\n## Conclusion\n\nThe best path forward for **${subjectTitle}** is grounded in clear requirements, pragmatic decisions, and a commitment to continuous improvement.`,
+    recommendation: `Start by clearly defining your specific requirements for ${subjectTitle}, then apply the simplest proven approach — iterate and refine from there.`
   }, null, 2);
 }
+
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));

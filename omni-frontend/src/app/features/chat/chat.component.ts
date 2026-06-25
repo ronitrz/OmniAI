@@ -136,6 +136,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
                     <app-response-grid
                       [selectedModels]="getModelsInfoForResponses(msg.responses)"
                       [streamStates]="getStreamStatesFromResponses(msg.responses)"
+                      [sharedPhrases]="msg.juryVerdict ? computeSharedPhrases(msg.responses) : []"
                     ></app-response-grid>
                   </div>
 
@@ -1307,5 +1308,46 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (modelId === 'claude-haiku') return '▲';
     if (modelId === 'deepseek-chat') return '◎';
     return '🤖';
+  }
+
+  /**
+   * Finds sentences/phrases that appear (normalized) in 2 or more model responses.
+   * Used to highlight shared content across model response cards.
+   */
+  computeSharedPhrases(responses: ModelResponse[]): string[] {
+    if (!responses || responses.length < 2) return [];
+
+    // Extract sentences from each response
+    const allSentences = responses.map(r => {
+      return r.content
+        .replace(/#+\s/g, '') // strip markdown headers
+        .replace(/\*\*|__/g, '') // strip bold
+        .replace(/\n+/g, ' ') // collapse newlines
+        .split(/(?<=[.!?])\s+/) // split on sentence boundaries
+        .map(s => s.trim().toLowerCase())
+        .filter(s => s.length >= 20); // min length to be meaningful
+    });
+
+    const shared: string[] = [];
+    const seen = new Set<string>();
+
+    // Find sentences present in at least 2 responses
+    for (let i = 0; i < allSentences.length; i++) {
+      for (const sentence of allSentences[i]) {
+        if (seen.has(sentence)) continue;
+        let matchCount = 0;
+        for (let j = 0; j < allSentences.length; j++) {
+          if (allSentences[j].some(s => s.includes(sentence) || sentence.includes(s))) {
+            matchCount++;
+          }
+        }
+        if (matchCount >= 2) {
+          shared.push(sentence);
+          seen.add(sentence);
+        }
+      }
+    }
+
+    return shared.slice(0, 20); // cap at 20 shared phrases
   }
 }

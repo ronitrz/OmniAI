@@ -17,6 +17,7 @@ import { ModelInfo } from '../model-selector/model-selector.component';
           [color]="model.color"
           [tier]="model.tier"
           [state]="streamStates[model.id] || getIdleState()"
+          [sharedPhrases]="sharedPhrases"
         ></app-response-card>
       </div>
     </div>
@@ -28,15 +29,14 @@ import { ModelInfo } from '../model-selector/model-selector.component';
       width: 100%;
       height: 100%;
     }
-    
-    /* Responsive grid columns (stacked vertically for wide horizontal layout) */
+
     .grid-layout.cols-1,
     .grid-layout.cols-2,
     .grid-layout.cols-3,
     .grid-layout.cols-4 {
       grid-template-columns: 1fr;
     }
-    
+
     @media (max-width: 900px) {
       .grid-layout.cols-2,
       .grid-layout.cols-3,
@@ -49,6 +49,7 @@ import { ModelInfo } from '../model-selector/model-selector.component';
 export class ResponseGridComponent {
   @Input() selectedModels: ModelInfo[] = [];
   @Input() streamStates: Record<string, CardStreamState> = {};
+  @Input() sharedPhrases: string[] = [];
 
   get gridClass(): string {
     return 'cols-1';

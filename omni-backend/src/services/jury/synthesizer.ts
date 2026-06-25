@@ -58,39 +58,38 @@ export async function synthesizeVerdict(
     ? extraction.contradictions.map(c => `• ${c.topic}`).join('\n')
     : '• No significant contradictions were detected.';
 
-  const synthesisPrompt = `You are an expert consensus synthesizer for a Multi-AI platform called OmniAI.
+  const synthesisPrompt = `You are an expert AI consensus synthesizer for OmniAI, a multi-model AI platform.
 
 ORIGINAL QUESTION: ${prompt}
 
-AI MODEL RESPONSES (summarized):
+AI MODEL RESPONSES:
 ${formattedResponses}
 
-ANALYSIS RESULTS:
+ANALYSIS:
 - Confidence Score: ${Math.round(scoring.confidenceScore * 100)}% (${scoring.confidenceLabel} agreement)
-- Key Agreements Identified:
-${agreementsList}
-- Contradictions Identified:
-${contradictionsList}
+- Agreed Points: ${extraction.agreements.length}
+- Contradictions: ${extraction.contradictions.length}
 
-Generate a Jury Verdict with exactly two parts:
+Your task: Write a COMPREHENSIVE, AUTHORITATIVE ANSWER to the user's question by synthesizing the best insights from all models.
 
-1. CONSENSUS TEXT (2-3 paragraphs):
-Write an authoritative, balanced consensus answer representing the strongest agreed-upon position.
-Acknowledge areas of disagreement honestly.
-Do not hedge excessively — be direct and useful.
-Write from the perspective of an informed expert synthesizing multiple AI perspectives.
+CRITICAL RULES:
+1. Write a DIRECT, COMPLETE ANSWER to the question — NOT a summary of what the models said
+2. Use the combined knowledge from all models to produce the richest possible answer
+3. Structure with markdown: use **bold** for key terms, ## headers for sections, bullet lists where useful
+4. Write 3-5 paragraphs of substantial content (aim for 300-600 words for the consensus text)
+5. Where models agreed, state the fact confidently. Where they differed, present both perspectives
+6. Never say "the models agreed" or "GPT said" — write directly as if you ARE the expert answer
+7. End with a clear, actionable takeaway
 
-2. RECOMMENDATION (1-2 sentences):
-One clear, actionable recommendation for the user based on the consensus.
-Start with an action verb. Example: "Use React for...", "Consider starting with...", "Focus on..."
+Also provide a one-sentence RECOMMENDATION starting with an action verb.
 
-Format your response as JSON:
+Return as JSON (no markdown fences):
 {
-  "consensusText": "Your 2-3 paragraph consensus here...",
-  "recommendation": "Your single recommendation sentence here..."
+  "consensusText": "Your full comprehensive answer here with markdown formatting...",
+  "recommendation": "One actionable sentence starting with a verb..."
 }
 
-Return ONLY valid JSON. No markdown fences.`;
+Return ONLY valid JSON.`;
 
   try {
     const provider = getJuryProvider();

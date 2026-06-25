@@ -4,11 +4,12 @@ import { CommonModule } from '@angular/common';
 import { JuryVerdict } from '../../../shared/models/verdict.model';
 import { ModelInfo } from '../model-selector/model-selector.component';
 import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-gauge/confidence-gauge.component';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-jury-verdict',
   standalone: true,
-  imports: [CommonModule, ConfidenceGaugeComponent],
+  imports: [CommonModule, ConfidenceGaugeComponent, MarkdownPipe],
   template: `
     <div class="verdict-card" *ngIf="verdict">
       <div class="verdict-header">
@@ -57,7 +58,7 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
             </div>
           </div>
 
-          <p class="summary-text">{{ verdict.consensusText }}</p>
+          <p class="summary-text" *ngIf="!verdict.consensusText">No consensus text available.</p>
           
           <div class="recommendation-card" *ngIf="verdict.recommendation">
             <div class="recommendation-badge">💡 ACTIONABLE RECOMMENDATION</div>
@@ -72,11 +73,10 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
           <button 
             type="button" 
             class="tab-btn" 
-            [class.active]="activeTab() === 'agreements'"
-            (click)="activeTab.set('agreements')"
+            [class.active]="activeTab() === 'answer'"
+            (click)="activeTab.set('answer')"
           >
-            🤝 Agreements
-            <span class="tab-badge">{{ verdict.agreements.length }}</span>
+            ✦ Consensus Answer
           </button>
           <button 
             type="button" 
@@ -99,17 +99,12 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
         </div>
 
         <div class="tab-body">
-          <!-- Agreements Tab -->
-          <div *ngIf="activeTab() === 'agreements'">
-            <ul class="analysis-list" *ngIf="verdict.agreements.length > 0; else noAgreements">
-              <li *ngFor="let agreement of verdict.agreements" class="analysis-item">
-                <span class="item-icon check">✓</span>
-                <p class="item-text">{{ agreement }}</p>
-              </li>
-            </ul>
-            <ng-template #noAgreements>
-              <p class="empty-tab-text">No strong consensus agreements were extracted.</p>
-            </ng-template>
+          <!-- Consensus Answer Tab -->
+          <div *ngIf="activeTab() === 'answer'" class="consensus-answer-body">
+            <div class="consensus-answer-header">
+              <span class="consensus-model-count">Synthesized from {{ modelsInfo.length || 'all' }} AI models</span>
+            </div>
+            <div class="markdown-content" [innerHTML]="verdict.consensusText | markdown"></div>
           </div>
 
           <!-- Contradictions Tab -->
@@ -534,13 +529,72 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
       text-align: center;
       padding: 2rem 0;
     }
+
+    /* Consensus Answer tab */
+    .consensus-answer-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .consensus-answer-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-bottom: 0.875rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .consensus-model-count {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted) !important;
+      background: var(--primary-glow);
+      padding: 0.2rem 0.75rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    /* Markdown rendering inside jury verdict */
+    .markdown-content ::ng-deep p { margin-bottom: 0.875rem; line-height: 1.75; color: var(--text-secondary) !important; }
+    .markdown-content ::ng-deep p:last-child { margin-bottom: 0; }
+    .markdown-content ::ng-deep h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary) !important;
+      margin-top: 1.5rem;
+      margin-bottom: 0.625rem;
+      letter-spacing: -0.01em;
+    }
+    .markdown-content ::ng-deep h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary) !important;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .markdown-content ::ng-deep strong { color: var(--text-primary) !important; font-weight: 700; }
+    .markdown-content ::ng-deep ul, .markdown-content ::ng-deep ol {
+      margin-left: 1.5rem;
+      margin-bottom: 0.875rem;
+      color: var(--text-secondary) !important;
+    }
+    .markdown-content ::ng-deep li { margin-bottom: 0.35rem; line-height: 1.6; }
+    .markdown-content ::ng-deep code {
+      background-color: rgba(0,0,0,0.06);
+      border: 1px solid var(--border-light);
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+      font-size: 0.8125rem;
+    }
   `]
+
 })
 export class JuryVerdictComponent {
   @Input() verdict: JuryVerdict | null = null;
   @Input() modelsInfo: ModelInfo[] = [];
 
-  activeTab = signal<'agreements' | 'contradictions' | 'insights'>('agreements');
+  activeTab = signal<'answer' | 'contradictions' | 'insights'>('answer');
 
   getPositionsArray(positions: Record<string, string>): { modelId: string; position: string }[] {
     return Object.entries(positions).map(([modelId, position]) => ({ modelId, position }));
