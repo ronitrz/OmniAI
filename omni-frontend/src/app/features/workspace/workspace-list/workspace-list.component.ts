@@ -15,7 +15,7 @@ import { Workspace } from '../../../shared/models/workspace.model';
     <div class="workspace-list-container animate-fade-in">
       <div class="header-section">
         <div class="header-title-container">
-          <button class="hamburger-btn" (click)="state.sidebarOpen.set(true)" title="Open Menu">☰</button>
+          <button class="hamburger-btn" (click)="state.toggleSidebar()" title="Toggle Sidebar">☰</button>
           <div>
             <h1 class="welcome-title">Welcome to OmniAI</h1>
             <p class="welcome-subtitle">Select a workspace or create a new one to start analyzing prompts.</p>

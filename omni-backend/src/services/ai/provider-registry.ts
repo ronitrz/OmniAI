@@ -9,7 +9,7 @@
 //   3. Done. Zero changes elsewhere.
 
 import { AIProvider, ModelInfo } from './interfaces/ai-provider.interface';
-import { GeminiProvider } from './providers/gemini.provider';
+
 import { DeepSeekProvider } from './providers/deepseek.provider';
 import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
@@ -24,7 +24,7 @@ class ProviderRegistry {
   private providers = new Map<string, AIProvider>();
 
   constructor() {
-    this.register('gemini-flash', new GeminiProvider());
+    this.register('gemini-flash', new MockProvider('gemini-flash'));
     this.register('deepseek-chat', new DeepSeekProvider());
     this.register('gpt-4o', new OpenAIProvider());
     this.register('claude-haiku', new AnthropicProvider());

@@ -3,26 +3,26 @@
 :root {
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   
-  /* Premium Dark Theme */
-  --bg-primary: #030712;      /* Deep pitch black-gray */
-  --bg-secondary: #0b0f19;    /* Deep dark navy-black */
-  --bg-tertiary: #111827;     /* Card background */
-  --bg-card: #0f172a;         /* Slate-900 card body */
-  --bg-glass: rgba(11, 15, 25, 0.65);
+  /* Space UI Dark Theme */
+  --bg-primary: #05050f;      /* Midnight space black */
+  --bg-secondary: #0a0b21;    /* Deep cosmic navy */
+  --bg-tertiary: #101233;     /* Nebula card dark blue */
+  --bg-card: #0d0f2b;         /* Space station interior card */
+  --bg-glass: rgba(10, 11, 33, 0.65);
   
-  --text-primary: #f9fafb;   /* Off-white */
-  --text-secondary: #d1d5db; /* Light gray */
-  --text-muted: #9ca3af;     /* Medium gray */
-  --text-dim: #6b7280;       /* Darker gray */
+  --text-primary: #f1f3f9;   /* Stellar white */
+  --text-secondary: #c2c9db; /* Soft starlight gray */
+  --text-muted: #8892b0;     /* Cosmic dust gray */
+  --text-dim: #5c647a;       /* Deep space gray */
   
-  --primary: #6366f1;        /* Electric Indigo */
-  --primary-hover: #818cf8;  /* Lighter Indigo */
-  --primary-glow: rgba(99, 102, 241, 0.2);
-  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  --primary: #8b5cf6;        /* Nebula Purple */
+  --primary-hover: #a78bfa;  /* Lighter Purple */
+  --primary-glow: rgba(139, 92, 246, 0.12);
+  --primary-gradient: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%); /* Purple to Cyan cosmic gradient */
   
-  --border-light: rgba(255, 255, 255, 0.06);
-  --border-focus: rgba(99, 102, 241, 0.3);
-  --border-hover: rgba(255, 255, 255, 0.12);
+  --border-light: rgba(139, 92, 246, 0.12); /* Subtle purple borders */
+  --border-focus: rgba(6, 182, 212, 0.4);
+  --border-hover: rgba(139, 92, 246, 0.3);
   
   /* Status Colors */
   --color-live: #10b981;      /* Emerald */
@@ -31,9 +31,74 @@
   --color-success: #10b981;
   --color-info: #0ea5e9;      /* Sky Blue */
   
+  --shadow-glass: 0 8px 32px rgba(6, 182, 212, 0.08), 0 4px 30px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --shadow-card-hover: 0 8px 30px rgba(139, 92, 246, 0.15), 0 0 15px rgba(6, 182, 212, 0.05);
+  
+  --bg-tab-header: rgba(3, 7, 18, 0.4);
+  --bg-tab-active: rgba(255, 255, 255, 0.06);
+  --bg-gauge: rgba(0, 0, 0, 0.2);
+  --bg-tabs-container: rgba(3, 7, 18, 0.4);
+  --bg-tabs-header: rgba(0, 0, 0, 0.3);
+  --bg-tab-badge: rgba(255, 255, 255, 0.08);
+  
   /* Layout */
   --sidebar-width: 280px;
   --header-height: 64px;
+}
+
+/* Premium Light Theme (with enhanced contrast for readability) */
+.light-theme {
+  --bg-primary: #f8fafc;       /* Slate-50 background */
+  --bg-secondary: #f1f5f9;     /* Slate-100 sidebar */
+  --bg-tertiary: #ffffff;      /* Pure white card backgrounds */
+  --bg-card: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.75);
+  
+  --text-primary: #0f172a;     /* Slate-900 */
+  --text-secondary: #334155;   /* Slate-700 */
+  --text-muted: #475569;       /* Slate-600 (Darker & highly readable) */
+  --text-dim: #64748b;         /* Slate-500 (Darker & highly readable) */
+  
+  --border-light: rgba(0, 0, 0, 0.08);
+  --border-focus: rgba(99, 102, 241, 0.3);
+  --border-hover: rgba(0, 0, 0, 0.15);
+  
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-glow: rgba(79, 70, 229, 0.06);
+  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  
+  --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 8px 30px rgba(0, 0, 0, 0.08), 0 0 15px rgba(99, 102, 241, 0.01);
+  
+  --bg-tab-header: rgba(0, 0, 0, 0.03);
+  --bg-tab-active: rgba(0, 0, 0, 0.05);
+  --bg-gauge: rgba(0, 0, 0, 0.02);
+  --bg-tabs-container: rgba(0, 0, 0, 0.01);
+  --bg-tabs-header: rgba(0, 0, 0, 0.03);
+  --bg-tab-badge: rgba(0, 0, 0, 0.05);
+}
+
+/* Theme Toggle Button styles */
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.theme-toggle-btn:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-hover);
+  transform: rotate(15deg);
 }
 
 * {
@@ -45,7 +110,10 @@
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
-  background-image: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08) 0%, rgba(3, 7, 18, 0) 65%);
+  background-image: 
+    radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 65%),
+    radial-gradient(circle at 10% 80%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 90% 40%, rgba(139, 92, 246, 0.03) 0%, transparent 40%);
   color: var(--text-primary);
   line-height: 1.5;
   overflow-x: hidden;
@@ -75,7 +143,7 @@ body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-light);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-glass);
 }
 
 .card {
@@ -83,13 +151,13 @@ body {
   border: 1px solid var(--border-light);
   border-radius: 14px;
   padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-card);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
   border-color: var(--border-hover);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35), 0 0 15px rgba(99, 102, 241, 0.03);
+  box-shadow: var(--shadow-card-hover);
   transform: translateY(-2px);
 }
 
@@ -200,25 +268,28 @@ body {
   100% { background-position: -200% 0; }
 }
 
-/* Mobile Responsiveness & Hamburger */
+/* Sidebar Toggle / Hamburger Button */
 .hamburger-btn {
-  display: none;
+  display: inline-flex;
   background: none;
-  border: none;
+  border: 1px solid var(--border-light);
   color: var(--text-primary);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   cursor: pointer;
   line-height: 1;
   padding: 0.5rem;
-  margin-right: 0.5rem;
-  border-radius: 6px;
+  margin-right: 0.75rem;
+  border-radius: 8px;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  width: 36px;
+  height: 36px;
 }
 
 .hamburger-btn:hover {
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-secondary);
+  border-color: var(--border-hover);
 }
 
 .header-title-container {
@@ -227,13 +298,59 @@ body {
 }
 
 @media (max-width: 768px) {
-  .hamburger-btn {
-    display: inline-flex;
-  }
-  
   /* Reset layout margins for full-width content on mobile */
   .main-content {
     margin-left: 0 !important;
   }
 }
+
+/* Consensus Side Dock overrides to fit narrow panel */
+.chat-right-panel app-jury-verdict .verdict-card {
+  padding: 1.25rem !important;
+  margin-top: 0 !important;
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-tertiary) !important;
+  box-shadow: none !important;
+  border-radius: 14px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.chat-right-panel app-jury-verdict .verdict-header {
+  margin-bottom: 1.25rem !important;
+  padding-bottom: 0.75rem !important;
+}
+.chat-right-panel app-jury-verdict .verdict-layout {
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+  width: 100% !important;
+  align-items: center !important;
+}
+.chat-right-panel app-jury-verdict .gauge-section {
+  width: 100% !important;
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem !important;
+}
+.chat-right-panel app-jury-verdict .metrics-summary-grid {
+  grid-template-columns: 1fr !important; /* stack metric cards vertically in sidebar */
+  width: 100% !important;
+  gap: 0.5rem !important;
+}
+.chat-right-panel app-jury-verdict .tabs-header {
+  flex-direction: column !important; /* stack tabs vertically */
+  gap: 0.25rem !important;
+}
+.chat-right-panel app-jury-verdict .tab-btn {
+  width: 100% !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.75rem !important;
+  border-radius: 8px !important;
+}
+.chat-right-panel app-jury-verdict .positions-grid {
+  grid-template-columns: 1fr !important;
+}
+.chat-right-panel app-jury-verdict .analysis-tabs-container {
+  margin-top: 1.5rem !important;
+}
+
 

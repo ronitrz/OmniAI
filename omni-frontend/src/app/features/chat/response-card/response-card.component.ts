@@ -1,5 +1,5 @@
 // src/app/features/chat/response-card/response-card.component.ts
-import { Component, Input } from '@angular/core';
+import { Component, Input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
@@ -51,6 +51,18 @@ export interface CardStreamState {
             <span class="pulsing-dot amber"></span>
             Thinking
           </span>
+
+          <!-- Copy Button (shows when there is content) -->
+          <button 
+            class="copy-btn" 
+            *ngIf="state.content && (state.status === 'complete' || state.status === 'streaming')" 
+            (click)="copyToClipboard()"
+            [title]="copied() ? 'Copied!' : 'Copy response'"
+            type="button"
+          >
+            <svg *ngIf="!copied()" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <svg *ngIf="copied()" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-success"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
         </div>
       </div>
 
@@ -92,38 +104,71 @@ export interface CardStreamState {
     .response-card {
       display: flex;
       flex-direction: column;
-      height: 100%;
-      min-height: 280px;
-      max-height: 480px;
-      padding: 1.5rem;
+      min-height: 200px;
+      padding: 1.75rem;
       border-radius: 16px;
       border: 1px solid var(--border-light);
       background: var(--bg-tertiary);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--shadow-card);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
-      overflow: hidden;
+      overflow: visible;
+      gap: 1.5rem;
+    }
+    
+    @media (min-width: 768px) {
+      .response-card {
+        flex-direction: row;
+        gap: 2.5rem;
+        align-items: stretch;
+      }
+      
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        border-bottom: none !important;
+        border-right: 1px solid var(--border-light);
+        padding-bottom: 0 !important;
+        padding-right: 2.5rem;
+        margin-bottom: 0 !important;
+        flex: 0 0 220px;
+        gap: 1.25rem;
+        height: auto;
+      }
+      
+      .metrics {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        gap: 0.75rem;
+      }
+      
+      .copy-btn {
+        margin-left: 0 !important;
+        margin-top: 0.5rem;
+      }
     }
     
     .response-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(99, 102, 241, 0.3);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.05);
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.25);
+      box-shadow: var(--shadow-card-hover);
     }
     
     .response-card.streaming {
       border-color: rgba(99, 102, 241, 0.4);
-      box-shadow: 0 0 25px rgba(99, 102, 241, 0.08);
-      background-image: linear-gradient(to bottom, var(--bg-tertiary), rgba(99, 102, 241, 0.01));
+      box-shadow: 0 0 25px rgba(99, 102, 241, 0.06);
+      background-image: linear-gradient(to bottom, var(--bg-tertiary), rgba(99, 102, 241, 0.005));
     }
     
     .response-card.complete {
-      border-color: rgba(255, 255, 255, 0.08);
+      border-color: var(--border-light);
     }
     
     .response-card.error-card {
       border-color: rgba(244, 63, 94, 0.3);
-      background-image: linear-gradient(to bottom, var(--bg-tertiary), rgba(244, 63, 94, 0.01));
+      background-image: linear-gradient(to bottom, var(--bg-tertiary), rgba(244, 63, 94, 0.005));
     }
     
     .card-header {
@@ -142,8 +187,8 @@ export interface CardStreamState {
     }
     
     .model-avatar {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -151,7 +196,7 @@ export interface CardStreamState {
       font-size: 1.25rem;
       color: #fff;
       font-weight: 700;
-      box-shadow: inset 0 1px rgba(255,255,255,0.2), 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: inset 0 1px rgba(255,255,255,0.2), 0 2px 8px rgba(0,0,0,0.15);
     }
     
     .model-logo-icon {
@@ -205,10 +250,10 @@ export interface CardStreamState {
       font-size: 0.75rem;
       font-weight: 600;
       color: var(--primary-hover);
-      background-color: rgba(99, 102, 241, 0.1);
+      background-color: var(--primary-glow);
       padding: 0.25rem 0.625rem;
       border-radius: 6px;
-      border: 1px solid rgba(99, 102, 241, 0.15);
+      border: 1px solid var(--border-light);
     }
     
     .status-badge {
@@ -219,14 +264,14 @@ export interface CardStreamState {
       font-weight: 600;
       padding: 0.25rem 0.625rem;
       border-radius: 6px;
-      background-color: rgba(255, 255, 255, 0.03);
+      background-color: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-light);
       color: var(--text-muted);
     }
     
     .status-badge.streaming {
       color: var(--primary-hover);
-      background-color: rgba(99, 102, 241, 0.05);
+      background-color: var(--primary-glow);
       border-color: rgba(99, 102, 241, 0.15);
     }
     
@@ -248,14 +293,36 @@ export interface CardStreamState {
       from { transform: scale(0.85); opacity: 0.5; }
       to { transform: scale(1.15); opacity: 1; }
     }
+
+    .copy-btn {
+      background: none;
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-left: 0.5rem;
+    }
+    .copy-btn:hover {
+      background-color: var(--bg-secondary);
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+    .text-success {
+      color: var(--color-success) !important;
+    }
     
     .card-body {
       flex: 1;
-      overflow-y: auto;
-      font-size: 0.875rem;
-      line-height: 1.7;
+      overflow: visible;
+      font-size: 0.9375rem;
+      line-height: 1.75;
       color: var(--text-secondary);
-      padding-right: 0.25rem;
     }
     
     .skeleton-wrapper {
@@ -272,7 +339,7 @@ export interface CardStreamState {
     .w-2-3 { width: 66%; }
     
     .markdown-content ::ng-deep p {
-      margin-bottom: 0.875rem;
+      margin-bottom: 1rem;
     }
     .markdown-content ::ng-deep p:last-child {
       margin-bottom: 0;
@@ -281,27 +348,30 @@ export interface CardStreamState {
     .markdown-content ::ng-deep h2,
     .markdown-content ::ng-deep h3 {
       color: var(--text-primary);
-      margin-top: 1.25rem;
-      margin-bottom: 0.625rem;
-      font-size: 1rem;
-      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 1.0625rem;
+      font-weight: 700;
     }
     .markdown-content ::ng-deep ul,
     .markdown-content ::ng-deep ol {
       margin-left: 1.5rem;
-      margin-bottom: 0.875rem;
+      margin-bottom: 1rem;
     }
     .markdown-content ::ng-deep li {
-      margin-bottom: 0.35rem;
+      margin-bottom: 0.45rem;
     }
     
     .markdown-content ::ng-deep code {
-      background-color: rgba(255, 255, 255, 0.05);
+      background-color: rgba(0, 0, 0, 0.05);
       border: 1px solid var(--border-light);
       padding: 0.125rem 0.25rem;
       border-radius: 4px;
       font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
       font-size: 0.8125rem;
+    }
+    .light-theme .markdown-content ::ng-deep code {
+      background-color: rgba(0, 0, 0, 0.04);
     }
     
     /* Bouncing dot indicator */
@@ -364,6 +434,16 @@ export class ResponseCardComponent {
   @Input() color: string = '#6366f1';
   @Input() tier: 'live' | 'demo' = 'demo';
   @Input() state: CardStreamState = { status: 'idle', content: '' };
+
+  copied = signal(false);
+
+  copyToClipboard(): void {
+    if (!this.state.content) return;
+    navigator.clipboard.writeText(this.state.content).then(() => {
+      this.copied.set(true);
+      setTimeout(() => this.copied.set(false), 2000);
+    });
+  }
 
   getAvatarGradient(): string {
     if (this.modelId === 'gpt-4o') {

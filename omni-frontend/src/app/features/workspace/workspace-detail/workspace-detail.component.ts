@@ -23,7 +23,7 @@ import { Session } from '../../../shared/models/session.model';
       <!-- Workspace Header -->
       <div class="header-section">
         <div class="header-title-container">
-          <button class="hamburger-btn" (click)="state.sidebarOpen.set(true)" title="Open Menu">☰</button>
+          <button class="hamburger-btn" (click)="state.toggleSidebar()" title="Toggle Sidebar">☰</button>
           <div>
             <div class="breadcrumbs">
               <span routerLink="/dashboard" (click)="state.clear()" class="breadcrumb-link">Workspaces</span>

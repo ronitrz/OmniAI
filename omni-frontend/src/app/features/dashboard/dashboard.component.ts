@@ -11,7 +11,7 @@ import { WorkspaceStateService } from '../../core/services/workspace-state.servi
   standalone: true,
   imports: [CommonModule, RouterOutlet, SidebarComponent],
   template: `
-    <div class="dashboard-layout">
+    <div class="dashboard-layout" [class.sidebar-open]="state.sidebarOpen()">
       <!-- Sidebar Backdrop for Mobile -->
       <div 
         class="sidebar-backdrop animate-fade-in" 
@@ -35,11 +35,14 @@ import { WorkspaceStateService } from '../../core/services/workspace-state.servi
       position: relative;
     }
     .main-content {
-      margin-left: var(--sidebar-width);
+      margin-left: 0;
       flex: 1;
       min-width: 0;
       background-color: var(--bg-primary);
-      transition: margin-left 0.3s ease-in-out;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .dashboard-layout.sidebar-open .main-content {
+      margin-left: var(--sidebar-width);
     }
     .sidebar-backdrop {
       display: none;
@@ -57,7 +60,7 @@ import { WorkspaceStateService } from '../../core/services/workspace-state.servi
       .sidebar-backdrop {
         display: block;
       }
-      .main-content {
+      .dashboard-layout.sidebar-open .main-content {
         margin-left: 0;
       }
     }

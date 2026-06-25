@@ -1,5 +1,5 @@
 // src/app/shared/components/sidebar/sidebar.component.ts
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -84,15 +84,49 @@ import { Workspace } from '../../models/workspace.model';
       </div>
 
       <div class="sidebar-footer" *ngIf="auth.currentUser() as user">
-        <div class="user-info">
+        <!-- Floating Profile Dropdown Menu -->
+        <div class="profile-dropdown animate-fade-in" *ngIf="profileMenuOpen()">
+          <div class="dropdown-header">
+            <span class="avatar-small">{{ user.fullName.slice(0, 2).toUpperCase() }}</span>
+            <div class="header-details">
+              <span class="dropdown-user-name">{{ user.fullName }}</span>
+              <span class="dropdown-user-email">{{ user.email }}</span>
+            </div>
+          </div>
+          
+          <div class="dropdown-divider"></div>
+          
+          <button class="dropdown-item" (click)="state.toggleTheme(); $event.stopPropagation()" type="button">
+            <span class="item-icon">{{ state.theme() === 'dark' ? '☀️' : '🌙' }}</span>
+            <span class="item-text">Switch to {{ state.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+          </button>
+          
+          <button class="dropdown-item" (click)="showMockSettings(); $event.stopPropagation()" type="button">
+            <span class="item-icon">⚙️</span>
+            <span class="item-text">Settings</span>
+          </button>
+          
+          <button class="dropdown-item" (click)="showMockAnalytics(); $event.stopPropagation()" type="button">
+            <span class="item-icon">📊</span>
+            <span class="item-text">Usage Stats</span>
+          </button>
+          
+          <div class="dropdown-divider"></div>
+          
+          <button class="dropdown-item logout-item" (click)="onLogout(); $event.stopPropagation()" type="button">
+            <span class="item-icon">🚪</span>
+            <span class="item-text">Log Out</span>
+          </button>
+        </div>
+
+        <!-- Profile Trigger Button -->
+        <button class="profile-trigger-btn" (click)="toggleProfileMenu($event)" type="button">
           <div class="user-avatar">{{ user.fullName.slice(0, 2).toUpperCase() }}</div>
           <div class="user-details">
             <div class="user-name">{{ user.fullName }}</div>
             <div class="user-email">{{ user.email }}</div>
           </div>
-        </div>
-        <button class="btn btn-secondary logout-btn" (click)="onLogout()">
-          Logout
+          <span class="chevron-icon">▲</span>
         </button>
       </div>
     </div>
@@ -154,6 +188,10 @@ import { Workspace } from '../../models/workspace.model';
       top: 0;
       z-index: 100;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateX(-100%);
+    }
+    .sidebar.open {
+      transform: translateX(0);
     }
     .sidebar-header {
       padding: 1.5rem;
@@ -188,7 +226,7 @@ import { Workspace } from '../../models/workspace.model';
       font-size: 1.25rem;
       font-weight: 800;
       letter-spacing: -0.03em;
-      background: linear-gradient(135deg, #ffffff 30%, var(--text-muted) 100%);
+      background: linear-gradient(135deg, var(--text-primary) 30%, var(--text-muted) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -360,13 +398,29 @@ import { Workspace } from '../../models/workspace.model';
       border-top: 1px solid var(--border-light);
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      position: relative;
       background-color: rgba(0, 0, 0, 0.15);
     }
-    .user-info {
+    .profile-trigger-btn {
+      width: 100%;
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 0.5rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      color: inherit;
+    }
+    .profile-trigger-btn:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+      border-color: var(--border-light);
+    }
+    .light-theme .profile-trigger-btn:hover {
+      background-color: rgba(0, 0, 0, 0.02);
     }
     .user-avatar {
       width: 36px;
@@ -383,10 +437,12 @@ import { Workspace } from '../../models/workspace.model';
     .user-details {
       flex: 1;
       min-width: 0;
+      display: flex;
+      flex-direction: column;
     }
     .user-name {
       font-size: 0.875rem;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text-primary);
       white-space: nowrap;
       overflow: hidden;
@@ -394,15 +450,120 @@ import { Workspace } from '../../models/workspace.model';
     }
     .user-email {
       font-size: 0.75rem;
-      color: var(--text-dim);
+      color: var(--text-muted);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .logout-btn {
-      width: 100%;
-      font-size: 0.75rem;
+    .chevron-icon {
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      margin-left: auto;
+      transition: color 0.2s ease;
+    }
+    .profile-trigger-btn:hover .chevron-icon {
+      color: var(--text-primary);
+    }
+    
+    /* Popover menu styles */
+    .profile-dropdown {
+      position: absolute;
+      bottom: 75px;
+      left: 1rem;
+      right: 1rem;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
       padding: 0.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .light-theme .profile-dropdown {
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+    
+    .dropdown-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem;
+    }
+    .avatar-small {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+    .header-details {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .dropdown-user-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dropdown-user-email {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .dropdown-divider {
+      height: 1px;
+      background-color: var(--border-light);
+      margin: 0.25rem 0;
+    }
+    
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      background: none;
+      border: none;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .dropdown-item:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+    }
+    .light-theme .dropdown-item:hover {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+    .logout-item:hover {
+      background-color: rgba(239, 68, 68, 0.08);
+      color: var(--color-error);
+    }
+    .item-icon {
+      font-size: 0.875rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
     }
 
     /* Modal Styling */
@@ -492,9 +653,29 @@ export class SidebarComponent implements OnInit {
   isLoading = signal(false);
   isCreating = signal(false);
   createError = signal<string | null>(null);
+  
+  profileMenuOpen = signal(false);
 
   newWorkspaceName = '';
   newWorkspaceDesc = '';
+
+  toggleProfileMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.profileMenuOpen.set(!this.profileMenuOpen());
+  }
+
+  showMockSettings(): void {
+    alert("Settings panel coming soon! Explore themes and workspace options here.");
+  }
+
+  showMockAnalytics(): void {
+    alert("Usage Analytics dashboard is in development. Track query tokens and consensus counts here.");
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.profileMenuOpen.set(false);
+  }
 
   ngOnInit(): void {
     this.loadWorkspaces();

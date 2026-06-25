@@ -24,33 +24,20 @@ import { ModelInfo } from '../model-selector/model-selector.component';
   styles: [`
     .grid-layout {
       display: grid;
-      gap: 1.25rem;
+      gap: 2rem;
       width: 100%;
       height: 100%;
     }
     
-    /* Responsive grid columns */
-    .grid-layout.cols-1 {
-      grid-template-columns: 1fr;
-    }
-    .grid-layout.cols-2 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .grid-layout.cols-3 {
-      grid-template-columns: repeat(3, 1fr);
-    }
+    /* Responsive grid columns (stacked vertically for wide horizontal layout) */
+    .grid-layout.cols-1,
+    .grid-layout.cols-2,
+    .grid-layout.cols-3,
     .grid-layout.cols-4 {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: 1fr;
     }
     
     @media (max-width: 900px) {
-      .grid-layout.cols-3,
-      .grid-layout.cols-4 {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    
-    @media (max-width: 600px) {
       .grid-layout.cols-2,
       .grid-layout.cols-3,
       .grid-layout.cols-4 {
@@ -64,8 +51,7 @@ export class ResponseGridComponent {
   @Input() streamStates: Record<string, CardStreamState> = {};
 
   get gridClass(): string {
-    const count = this.selectedModels.length;
-    return `cols-${Math.max(1, Math.min(4, count))}`;
+    return 'cols-1';
   }
 
   getIdleState(): CardStreamState {

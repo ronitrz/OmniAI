@@ -14,7 +14,37 @@ export class WorkspaceStateService {
   activeWorkspaceId = signal<string | null>(null);
   activeSessionId = signal<string | null>(null);
   sidebarSessions = signal<Session[]>([]);
-  sidebarOpen = signal<boolean>(false);
+  sidebarOpen = signal<boolean>(typeof window !== 'undefined' ? window.innerWidth > 768 : true);
+  theme = signal<'dark' | 'light'>('dark');
+
+  toggleSidebar(): void {
+    this.sidebarOpen.set(!this.sidebarOpen());
+  }
+
+  initTheme(): void {
+    const saved = localStorage.getItem('omni_theme') as 'dark' | 'light';
+    if (saved) {
+      this.theme.set(saved);
+    } else {
+      this.theme.set('dark');
+    }
+    this.applyTheme(this.theme());
+  }
+
+  toggleTheme(): void {
+    const next = this.theme() === 'dark' ? 'light' : 'dark';
+    this.theme.set(next);
+    localStorage.setItem('omni_theme', next);
+    this.applyTheme(next);
+  }
+
+  private applyTheme(t: 'dark' | 'light'): void {
+    if (t === 'light') {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+  }
 
   loadWorkspaces(): void {
     if (localStorage.getItem('omni_token')) {

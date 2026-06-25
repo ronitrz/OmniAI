@@ -161,14 +161,13 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
   `,
   styles: [`
     .verdict-card {
-      padding: 2.25rem;
-      border-radius: 20px;
+      padding: 1.75rem;
+      border-radius: 16px;
       margin-top: 2.5rem;
-      border: 1px solid rgba(99, 102, 241, 0.15);
-      background: linear-gradient(135deg, rgba(17, 24, 39, 0.4) 0%, rgba(11, 15, 25, 0.4) 100%);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-light) !important;
+      background: var(--bg-tertiary) !important;
+      color: var(--text-secondary) !important;
+      box-shadow: var(--shadow-card);
       animation: fadeIn 0.4s ease-out forwards;
     }
     
@@ -202,10 +201,10 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     }
     
     .title {
-      font-size: 1.375rem;
-      font-weight: 800;
-      color: var(--text-primary);
-      letter-spacing: -0.02em;
+      font-size: 1.125rem;
+      font-weight: 750;
+      color: var(--text-primary) !important;
+      letter-spacing: -0.01em;
     }
     
     .badge {
@@ -238,7 +237,8 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     
     .verdict-layout {
       display: flex;
-      gap: 2.5rem;
+      flex-wrap: wrap;
+      gap: 2rem 2.5rem;
       align-items: flex-start;
       margin-bottom: 2rem;
     }
@@ -253,31 +253,26 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     
     .gauge-section {
       flex-shrink: 0;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--bg-tertiary) !important;
       padding: 1rem;
       border-radius: 16px;
       border: 1px solid var(--border-light);
     }
     
     .consensus-section {
-      flex: 1;
+      flex: 1 1 300px;
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
       width: 100%;
+      min-width: 0;
     }
     
     /* Metrics counters grid */
     .metrics-summary-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 1rem;
-    }
-    
-    @media (max-width: 500px) {
-      .metrics-summary-grid {
-        grid-template-columns: 1fr;
-      }
     }
     
     .metric-card {
@@ -286,6 +281,9 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
       gap: 0.875rem;
       padding: 0.875rem 1.25rem;
       border-radius: 12px;
+      background: var(--bg-tertiary) !important;
+      border: 1px solid var(--border-light) !important;
+      box-shadow: none !important;
     }
     
     .m-icon {
@@ -301,14 +299,14 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     .m-val {
       font-size: 1.25rem;
       font-weight: 800;
-      color: var(--text-primary);
+      color: var(--text-primary) !important;
       line-height: 1.1;
     }
     
     .m-label {
       font-size: 0.6875rem;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--text-muted) !important;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -316,15 +314,15 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     .summary-text {
       font-size: 0.9375rem;
       line-height: 1.7;
-      color: var(--text-secondary);
+      color: var(--text-secondary) !important;
     }
     
     .recommendation-card {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(168, 85, 2 purple, 0.01) 100%);
-      border: 1px dashed rgba(99, 102, 241, 0.25);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(168, 85, 2 purple, 0.01) 100%) !important;
+      border: 1px dashed rgba(99, 102, 241, 0.25) !important;
       padding: 1.25rem;
       border-radius: 12px;
       position: relative;
@@ -341,7 +339,7 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
       font-size: 0.875rem;
       font-weight: 500;
       line-height: 1.5;
-      color: var(--text-primary);
+      color: var(--text-primary) !important;
     }
     
     /* Tabs selector layout */
@@ -349,13 +347,14 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
       border: 1px solid var(--border-light);
       border-radius: 16px;
       overflow: hidden;
-      background-color: rgba(3, 7, 18, 0.4);
+      background-color: var(--bg-tertiary) !important;
       margin-top: 2rem;
     }
     
     .tabs-header {
       display: flex;
-      background-color: rgba(0, 0, 0, 0.3);
+      flex-wrap: wrap;
+      background-color: var(--bg-secondary) !important;
       border-bottom: 1px solid var(--border-light);
       padding: 0.35rem;
       gap: 0.35rem;
@@ -371,7 +370,7 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
       flex: 1;
       background: none;
       border: none;
-      color: var(--text-muted);
+      color: var(--text-muted) !important;
       font-family: inherit;
       font-size: 0.8125rem;
       font-weight: 600;
@@ -386,12 +385,12 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     }
     
     .tab-btn:hover {
-      color: var(--text-primary);
-      background-color: rgba(255, 255, 255, 0.02);
+      color: var(--text-primary) !important;
+      background-color: var(--bg-tab-active);
     }
     
     .tab-btn.active {
-      color: #ffffff;
+      color: #ffffff !important;
       background-color: var(--primary);
       box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
     }
@@ -400,7 +399,7 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background-color: rgba(255, 255, 255, 0.08);
+      background-color: var(--bg-tab-badge);
       border-radius: 9999px;
       min-width: 20px;
       height: 20px;
@@ -449,7 +448,7 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     
     .item-text {
       font-size: 0.875rem;
-      color: var(--text-secondary);
+      color: var(--text-secondary) !important;
       line-height: 1.5;
     }
     
@@ -485,7 +484,7 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     .contradiction-topic {
       font-size: 0.9375rem;
       font-weight: 700;
-      color: var(--text-primary);
+      color: var(--text-primary) !important;
     }
     
     .positions-grid {
@@ -495,8 +494,8 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     }
     
     .position-card {
-      background-color: rgba(255, 255, 255, 0.015);
-      border: 1px solid var(--border-light);
+      background-color: var(--bg-tertiary) !important;
+      border: 1px solid var(--border-light) !important;
       border-radius: 10px;
       padding: 1rem;
       display: flex;
@@ -508,8 +507,8 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     }
     
     .position-card:hover {
-      background-color: rgba(255, 255, 255, 0.025);
-      border-color: rgba(255, 255, 255, 0.1);
+      background-color: var(--bg-secondary) !important;
+      border-color: var(--border-hover) !important;
     }
     
     .model-accent-bar {
@@ -525,13 +524,13 @@ import { ConfidenceGaugeComponent } from '../../../shared/components/confidence-
     .position-text {
       font-size: 0.8125rem;
       line-height: 1.5;
-      color: var(--text-secondary);
+      color: var(--text-secondary) !important;
       font-style: italic;
     }
     
     .empty-tab-text {
       font-size: 0.875rem;
-      color: var(--text-dim);
+      color: var(--text-dim) !important;
       text-align: center;
       padding: 2rem 0;
     }

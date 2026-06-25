@@ -28,213 +28,307 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
     ResearchReportComponent
   ],
   template: `
-    <div class="chat-page-container">
-      <!-- Floating Stream Toast -->
-      <div class="toast-error animate-fade-in" *ngIf="streamError()">
-        <span class="toast-icon">⚠️</span>
-        <span class="toast-text">{{ streamError() }}</span>
-        <button class="close-toast-btn" (click)="streamError.set(null)">×</button>
-      </div>
+    <div class="chat-page-container" [class.right-panel-active]="rightPanelOpen()">
+      <div class="chat-main-area">
+        <!-- Floating Stream Toast -->
+        <div class="toast-error animate-fade-in" *ngIf="streamError()">
+          <span class="toast-icon">⚠️</span>
+          <span class="toast-text">{{ streamError() }}</span>
+          <button class="close-toast-btn" (click)="streamError.set(null)">×</button>
+        </div>
 
-      <!-- Chat Header -->
-      <div class="chat-header glass">
-        <div class="header-left">
-          <button class="hamburger-btn" (click)="state.sidebarOpen.set(true)" title="Open Menu">☰</button>
-          <button class="back-btn" [routerLink]="['/dashboard/workspace', state.activeWorkspaceId()]">
-            ← Back
-          </button>
-          <div class="session-info">
-            <h1 class="session-title">{{ sessionTitle() }}</h1>
-            <span class="session-subtitle">Multi-AI Consensus Room</span>
+        <!-- Chat Header -->
+        <div class="chat-header glass">
+          <div class="header-left">
+            <button class="hamburger-btn" (click)="state.toggleSidebar()" title="Toggle Sidebar">☰</button>
+            <button class="back-btn" [routerLink]="['/dashboard/workspace', state.activeWorkspaceId()]">
+              ← Back
+            </button>
+            <div class="session-info">
+              <h1 class="session-title">{{ sessionTitle() }}</h1>
+              <span class="session-subtitle">Multi-AI Consensus Room</span>
+            </div>
+          </div>
+          <div class="header-right" *ngIf="isGenerating() || verdictLoading()">
+            <span class="status-indicator animate-pulse">
+              {{ isGenerating() ? 'Streaming AI Answers...' : 'Consensus Jury Deliberating...' }}
+            </span>
           </div>
         </div>
-        <div class="header-right" *ngIf="isGenerating() || verdictLoading()">
-          <span class="status-indicator animate-pulse">
-            {{ isGenerating() ? 'Streaming AI Answers...' : 'Consensus Jury Deliberating...' }}
-          </span>
-        </div>
-      </div>
 
-      <!-- Chat Conversation Messages (Scrollable) -->
-      <div class="chat-messages-area" #scrollContainer>
-        <div class="messages-list">
-          <!-- Session Welcome View if no messages -->
-          <div class="welcome-box glass animate-fade-in" *ngIf="messagesList().length === 0 && !isGenerating()">
-            <div class="icon">⚖️</div>
-            <h2>Start a Consensus Debate</h2>
-            <p>Select up to 4 models below, type your question, and watch them stream responses concurrently. OmniAI will then analyze their answers and output a Jury Verdict.</p>
-          </div>
-
-          <!-- Message History List -->
-          <div *ngFor="let msg of messagesList()" class="message-group animate-fade-in">
-            <!-- User Prompt -->
-            <div class="user-message-row" *ngIf="msg.role === 'user'">
-              <div class="avatar user">U</div>
-              <div class="content-bubble user">
-                <p>{{ msg.content }}</p>
-              </div>
+        <!-- Chat Conversation Messages (Scrollable) -->
+        <div class="chat-messages-area" #scrollContainer>
+          <div class="messages-list">
+            <!-- Welcome message for new sessions -->
+            <div class="welcome-box glass animate-fade-in" *ngIf="messagesList().length === 0 && !isGenerating()">
+              <span class="icon">⚖️</span>
+              <h2>AI Consensus Room</h2>
+              <p>Type a prompt below to consult multiple AI engines. The Jury system will compile the results, highlight disagreements, and recommend the best synthesized answer.</p>
             </div>
 
-            <!-- Assistant responses (Standard Grid or Research Layout) -->
-            <div class="assistant-responses-row" *ngIf="msg.role === 'assistant' || (msg.role === 'user' && msg.responses?.length)">
-              
-              <!-- Segmented View Tabs (Only when juryVerdict is present and not research mode) -->
-              <div class="session-tab-header" *ngIf="msg.juryVerdict && msg.mode !== 'research'">
-                <button 
-                  type="button" 
-                  class="session-tab-btn" 
-                  [class.active]="getActiveTab(msg.id) === 'responses'"
-                  (click)="setActiveTab(msg.id, 'responses')"
-                >
-                  💬 Responses
-                </button>
-                <button 
-                  type="button" 
-                  class="session-tab-btn" 
-                  [class.active]="getActiveTab(msg.id) === 'consensus'"
-                  (click)="setActiveTab(msg.id, 'consensus')"
-                >
-                  ⚖️ Jury Verdict
-                </button>
-                <button 
-                  type="button" 
-                  class="session-tab-btn" 
-                  [class.active]="getActiveTab(msg.id) === 'compare'"
-                  (click)="setActiveTab(msg.id, 'compare')"
-                >
-                  📊 Compare Matrix
-                </button>
+            <!-- Messages Stream -->
+            <div 
+              *ngFor="let msg of messagesList(); let i = index" 
+              class="message-group animate-fade-in"
+            >
+              <!-- User prompt message row -->
+              <div class="user-message-row" *ngIf="msg.role === 'user'">
+                <div class="avatar user">U</div>
+                <div class="content-bubble user">
+                  <p>{{ msg.content }}</p>
+                </div>
               </div>
 
-              <!-- Content body depending on Mode / Active Tab -->
-              <div *ngIf="msg.mode === 'research'">
-                <app-research-report
-                  [selectedModels]="getModelsInfoForResponses(msg.responses)"
-                  [streamStates]="getStreamStatesFromResponses(msg.responses)"
-                ></app-research-report>
-              </div>
+              <!-- Assistant responses (Standard Grid or Research Layout) -->
+              <div class="assistant-responses-row" *ngIf="msg.role === 'assistant' || (msg.role === 'user' && msg.responses?.length)">
+                
+                <!-- Segmented View Tabs (Only when juryVerdict is present and not research mode) -->
+                <div class="session-tab-header" *ngIf="msg.juryVerdict && msg.mode !== 'research'">
+                  <button 
+                    type="button" 
+                    class="session-tab-btn" 
+                    [class.active]="getActiveTab(msg.id) === 'responses'"
+                    (click)="setActiveTab(msg.id, 'responses')"
+                  >
+                    💬 Responses
+                  </button>
+                  <button 
+                    type="button" 
+                    class="session-tab-btn" 
+                    [class.active]="getActiveTab(msg.id) === 'consensus'"
+                    (click)="setActiveTab(msg.id, 'consensus')"
+                  >
+                    ⚖️ Jury Verdict
+                  </button>
+                  <button 
+                    type="button" 
+                    class="session-tab-btn" 
+                    [class.active]="getActiveTab(msg.id) === 'compare'"
+                    (click)="setActiveTab(msg.id, 'compare')"
+                  >
+                    📊 Compare Matrix
+                  </button>
+                  
+                  <div class="tab-spacer"></div>
+                  
+                  <button 
+                    type="button" 
+                    class="session-tab-btn dock-panel-btn"
+                    [class.active]="rightPanelOpen() && rightPanelMessage()?.id === msg.id"
+                    (click)="toggleRightPanel(msg)"
+                    [title]="rightPanelOpen() && rightPanelMessage()?.id === msg.id ? 'Undock split-view panel' : 'Open in split-view panel on the right'"
+                  >
+                    {{ rightPanelOpen() && rightPanelMessage()?.id === msg.id ? '◨ Undock Panel' : '◧ Dock Side-Panel' }}
+                  </button>
+                </div>
 
-              <div *ngIf="msg.mode !== 'research'">
-                <!-- Tab 1: Responses Grid -->
-                <div *ngIf="!msg.juryVerdict || getActiveTab(msg.id) === 'responses'" class="tab-content-wrapper animate-fade-in">
-                  <app-response-grid
+                <!-- Content body depending on Mode / Active Tab -->
+                <div *ngIf="msg.mode === 'research'">
+                  <app-research-report
                     [selectedModels]="getModelsInfoForResponses(msg.responses)"
                     [streamStates]="getStreamStatesFromResponses(msg.responses)"
-                  ></app-response-grid>
+                  ></app-research-report>
                 </div>
 
-                <!-- Tab 2: Jury Verdict dashboard -->
-                <div *ngIf="msg.juryVerdict && getActiveTab(msg.id) === 'consensus'" class="tab-content-wrapper animate-fade-in">
-                  <app-jury-verdict
-                    [verdict]="msg.juryVerdict"
-                    [modelsInfo]="allModels()"
-                  ></app-jury-verdict>
-                </div>
+                <div *ngIf="msg.mode !== 'research'">
+                  <!-- Tab 1: Responses Grid -->
+                  <div *ngIf="!msg.juryVerdict || getActiveTab(msg.id) === 'responses'" class="tab-content-wrapper animate-fade-in">
+                    <app-response-grid
+                      [selectedModels]="getModelsInfoForResponses(msg.responses)"
+                      [streamStates]="getStreamStatesFromResponses(msg.responses)"
+                    ></app-response-grid>
+                  </div>
 
-                <!-- Tab 3: Comparison Matrix Table -->
-                <div *ngIf="msg.juryVerdict && getActiveTab(msg.id) === 'compare'" class="tab-content-wrapper animate-fade-in">
-                  <div class="comparison-view card glass">
-                    <h3 class="comparison-title">Model Response Comparison</h3>
-                    <div class="table-container">
-                      <table class="comparison-table">
-                        <thead>
-                          <tr>
-                            <th>Model Name</th>
-                            <th>Tier / Latency</th>
-                            <th>Core Summary</th>
-                            <th>Unique Insight</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr *ngFor="let modelResponse of msg.responses">
-                            <td class="model-cell">
-                              <div class="model-meta">
-                                <span class="model-avatar" [style.background]="getAvatarGradient(modelResponse.modelId)">
-                                  {{ getModelDisplayName(modelResponse.modelId).slice(0, 2).toUpperCase() }}
+                  <!-- Tab 2: Jury Verdict dashboard -->
+                  <div *ngIf="msg.juryVerdict && getActiveTab(msg.id) === 'consensus'" class="tab-content-wrapper animate-fade-in">
+                    <app-jury-verdict
+                      [verdict]="msg.juryVerdict"
+                      [modelsInfo]="allModels()"
+                    ></app-jury-verdict>
+                  </div>
+
+                  <!-- Tab 3: Comparison Matrix Table -->
+                  <div *ngIf="msg.juryVerdict && getActiveTab(msg.id) === 'compare'" class="tab-content-wrapper animate-fade-in">
+                    <div class="comparison-view card glass">
+                      <h3 class="comparison-title">Model Response Comparison</h3>
+                      <div class="table-container">
+                        <table class="comparison-table">
+                          <thead>
+                            <tr>
+                              <th>Model Name</th>
+                              <th>Tier / Latency</th>
+                              <th>Core Summary</th>
+                              <th>Unique Insight</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr *ngFor="let modelResponse of msg.responses">
+                              <td class="model-cell">
+                                <div class="model-meta">
+                                  <span class="model-avatar" [style.background]="getAvatarGradient(modelResponse.modelId)">
+                                    {{ getModelSymbol(modelResponse.modelId) }}
+                                  </span>
+                                  <span class="model-name">{{ getModelDisplayName(modelResponse.modelId) }}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <span class="badge-capsule" [class.live]="modelResponse.status === 'success'" [class.demo]="modelResponse.isMock">
+                                  {{ modelResponse.isMock ? 'DEMO' : 'LIVE' }}
                                 </span>
-                                <span class="model-name">{{ getModelDisplayName(modelResponse.modelId) }}</span>
-                              </div>
-                            </td>
-                            <td>
-                              <span class="badge-capsule" [class.live]="modelResponse.status === 'success'" [class.demo]="modelResponse.isMock">
-                                {{ modelResponse.isMock ? 'DEMO' : 'LIVE' }}
-                              </span>
-                              <span class="latency" *ngIf="modelResponse.latencyMs">
-                                {{ (modelResponse.latencyMs / 1000).toFixed(2) }}s
-                              </span>
-                            </td>
-                            <td>
-                              <p class="summary-text">{{ getCoreSummary(modelResponse.content) }}</p>
-                            </td>
-                            <td>
-                              <p class="insight-text">
-                                {{ getModelUniqueInsight(msg.juryVerdict, modelResponse.modelId) || 'Included in main consensus agreements' }}
-                              </p>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                                <span class="latency" *ngIf="modelResponse.latencyMs">
+                                  {{ (modelResponse.latencyMs / 1000).toFixed(2) }}s
+                                </span>
+                              </td>
+                              <td>
+                                <p class="summary-text">{{ getCoreSummary(modelResponse.content) }}</p>
+                              </td>
+                              <td>
+                                <p class="insight-text">
+                                  {{ getModelUniqueInsight(msg.juryVerdict, modelResponse.modelId) || 'Included in main consensus agreements' }}
+                                </p>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Active/Current Streaming Turn -->
-          <div class="message-group active-turn animate-fade-in" *ngIf="isGenerating() || verdictLoading()">
-            <!-- Current Prompt -->
-            <div class="user-message-row">
-              <div class="avatar user">U</div>
-              <div class="content-bubble user">
-                <p>{{ currentPromptText() }}</p>
-              </div>
-            </div>
-
-            <!-- Current Streaming Cards (Standard Mode) -->
-            <div class="assistant-responses-row" *ngIf="currentMode() === 'standard'">
-              <app-response-grid
-                [selectedModels]="activeSelectedModelsInfo()"
-                [streamStates]="activeStreamStates()"
-              ></app-response-grid>
-            </div>
-
-            <!-- Current Streaming Report (Research Mode) -->
-            <div class="assistant-responses-row" *ngIf="currentMode() === 'research'">
-              <app-research-report
-                [selectedModels]="activeSelectedModelsInfo()"
-                [streamStates]="activeStreamStates()"
-              ></app-research-report>
-            </div>
-
-            <!-- Redesigned Deliberating loader -->
-            <div class="verdict-loading-card glass animate-fade-in" *ngIf="verdictLoading()">
-              <div class="loader-content">
-                <span class="deliberation-icon">⚖️</span>
-                <div class="loader-text">
-                  <h3>Jury Deliberating Consensus</h3>
-                  <p>Resolving contradictions, parsing models' claims, and synthesizing final recommendations...</p>
+            <!-- Active/Current Streaming Turn -->
+            <div class="message-group active-turn animate-fade-in" *ngIf="isGenerating() || verdictLoading()">
+              <!-- Current Prompt -->
+              <div class="user-message-row">
+                <div class="avatar user">U</div>
+                <div class="content-bubble user">
+                  <p>{{ currentPromptText() }}</p>
                 </div>
-                <div class="loader-progress-container">
-                  <div class="loader-progress-bar"></div>
+              </div>
+
+              <!-- Current Streaming Cards (Standard Mode) -->
+              <div class="assistant-responses-row" *ngIf="currentMode() === 'standard'">
+                <app-response-grid
+                  [selectedModels]="activeSelectedModelsInfo()"
+                  [streamStates]="activeStreamStates()"
+                ></app-response-grid>
+              </div>
+
+              <!-- Current Streaming Report (Research Mode) -->
+              <div class="assistant-responses-row" *ngIf="currentMode() === 'research'">
+                <app-research-report
+                  [selectedModels]="activeSelectedModelsInfo()"
+                  [streamStates]="activeStreamStates()"
+                ></app-research-report>
+              </div>
+
+              <!-- Redesigned Deliberating loader -->
+              <div class="verdict-loading-card glass animate-fade-in" *ngIf="verdictLoading()">
+                <div class="loader-content">
+                  <span class="deliberation-icon">⚖️</span>
+                  <div class="loader-text">
+                    <h3>Jury Deliberating Consensus</h3>
+                    <p>Resolving contradictions, parsing models' claims, and synthesizing final recommendations...</p>
+                  </div>
+                  <div class="loader-progress-container">
+                    <div class="loader-progress-bar"></div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Chat Bottom Input Bar (Fixed) -->
+        <div class="chat-input-area glass">
+          <app-chat-input
+            [models]="allModels()"
+            [selectedIds]="selectedModelIds()"
+            [mode]="currentMode()"
+            [disabled]="isGenerating() || verdictLoading()"
+            (sendMessage)="onSendMessage($event)"
+            (modelSelectionChanged)="onModelSelectionChange($event)"
+            (modeChanged)="currentMode.set($event)"
+          ></app-chat-input>
+        </div>
       </div>
 
-      <!-- Chat Bottom Input Bar (Fixed) -->
-      <div class="chat-input-area glass">
-        <app-chat-input
-          [models]="allModels()"
-          [selectedIds]="selectedModelIds()"
-          [mode]="currentMode()"
-          [disabled]="isGenerating() || verdictLoading()"
-          (sendMessage)="onSendMessage($event)"
-          (modelSelectionChanged)="onModelSelectionChange($event)"
-          (modeChanged)="currentMode.set($event)"
-        ></app-chat-input>
+      <!-- Right Side Collapsible Split-View Drawer -->
+      <div class="chat-right-panel glass animate-fade-in" *ngIf="rightPanelOpen() && rightPanelMessage() as msg">
+        <div class="panel-header">
+          <div class="panel-title-area">
+            <span class="panel-icon">⚖️</span>
+            <span class="panel-title">Consensus Dock</span>
+          </div>
+          
+          <div class="panel-tabs">
+            <button 
+              type="button"
+              class="panel-tab-btn" 
+              [class.active]="rightPanelType() === 'consensus'"
+              (click)="rightPanelType.set('consensus')"
+            >
+              Verdict
+            </button>
+            <button 
+              type="button"
+              class="panel-tab-btn" 
+              [class.active]="rightPanelType() === 'compare'"
+              (click)="rightPanelType.set('compare')"
+            >
+              Comparison
+            </button>
+          </div>
+          
+          <button type="button" class="close-panel-btn" (click)="closeRightPanel()" title="Close Split Panel">×</button>
+        </div>
+        
+        <div class="panel-body">
+          <!-- Jury Verdict Dashboard inside Panel -->
+          <div class="panel-content" *ngIf="rightPanelType() === 'consensus'">
+            <app-jury-verdict
+              [verdict]="msg.juryVerdict"
+              [modelsInfo]="allModels()"
+            ></app-jury-verdict>
+          </div>
+          
+          <!-- Comparison Table inside Panel -->
+          <div class="panel-content compare-panel-view" *ngIf="rightPanelType() === 'compare'">
+            <h3 class="comparison-title">Model Response Comparison</h3>
+            <div class="table-container">
+              <table class="comparison-table">
+                <thead>
+                  <tr>
+                    <th>Model Name</th>
+                    <th>Latency</th>
+                    <th>Summary</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let modelResponse of msg.responses">
+                    <td class="model-cell">
+                      <div class="model-meta">
+                        <span class="model-avatar" [style.background]="getAvatarGradient(modelResponse.modelId)">
+                          {{ getModelSymbol(modelResponse.modelId) }}
+                        </span>
+                        <span class="model-name">{{ getModelDisplayName(modelResponse.modelId) }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="latency" *ngIf="modelResponse.latencyMs">
+                        {{ (modelResponse.latencyMs / 1000).toFixed(2) }}s
+                      </span>
+                    </td>
+                    <td>
+                      <p class="summary-text">{{ getCoreSummary(modelResponse.content) }}</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `,
@@ -443,13 +537,14 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
     /* Segmented view switcher inside messaging */
     .session-tab-header {
       display: flex;
-      background-color: rgba(3, 7, 18, 0.4);
+      background-color: var(--bg-tab-header, rgba(3, 7, 18, 0.4));
       padding: 0.25rem;
       border-radius: 10px;
       gap: 0.25rem;
-      width: fit-content;
+      width: 100%;
       margin-bottom: 0.25rem;
       border: 1px solid var(--border-light);
+      align-items: center;
     }
     
     .session-tab-btn {
@@ -474,9 +569,9 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
     }
     
     .session-tab-btn.active {
-      color: #ffffff;
-      background-color: rgba(255, 255, 255, 0.06);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      color: var(--text-primary);
+      background-color: var(--bg-tab-active, rgba(255, 255, 255, 0.06));
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     }
 
     /* Redesigned Deliberation Loader */
@@ -543,23 +638,25 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
 
     /* Comparison View Card Styles */
     .comparison-view {
-      padding: 2rem;
-      border-radius: 18px;
-      border: 1px solid var(--border-light);
-      background: linear-gradient(135deg, rgba(17, 24, 39, 0.3) 0%, rgba(11, 15, 25, 0.3) 100%);
+      padding: 1.75rem;
+      border-radius: 16px;
+      border: 1px solid var(--border-light) !important;
+      background: var(--bg-tertiary) !important;
+      color: var(--text-secondary) !important;
+      box-shadow: var(--shadow-card);
     }
     .comparison-title {
       font-size: 1.125rem;
       font-weight: 750;
-      color: var(--text-primary);
+      color: var(--text-primary) !important;
       margin-bottom: 1.5rem;
       letter-spacing: -0.01em;
     }
     .table-container {
       overflow-x: auto;
-      border: 1px solid var(--border-light);
+      border: 1px solid var(--border-light) !important;
       border-radius: 12px;
-      background-color: rgba(3, 7, 18, 0.3);
+      background-color: var(--bg-tertiary) !important;
     }
     .comparison-table {
       width: 100%;
@@ -568,19 +665,19 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
       font-size: 0.8125rem;
     }
     .comparison-table th {
-      background-color: rgba(0, 0, 0, 0.3);
-      color: var(--text-muted);
+      background-color: var(--bg-secondary) !important;
+      color: var(--text-primary) !important;
       font-weight: 700;
       padding: 0.875rem 1.25rem;
-      border-bottom: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light) !important;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-size: 0.6875rem;
     }
     .comparison-table td {
       padding: 1.125rem 1.25rem;
-      border-bottom: 1px solid var(--border-light);
-      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-light) !important;
+      color: var(--text-secondary) !important;
       vertical-align: top;
       line-height: 1.5;
     }
@@ -589,7 +686,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
     }
     .model-cell {
       font-weight: 700;
-      color: var(--text-primary);
+      color: var(--text-primary) !important;
     }
     .model-meta {
       display: flex;
@@ -603,7 +700,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.7rem;
+      font-size: 0.95rem;
       color: #fff;
       font-weight: 700;
       box-shadow: inset 0 1px rgba(255,255,255,0.15), 0 1px 4px rgba(0,0,0,0.3);
@@ -611,6 +708,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
     .comparison-table .model-name {
       font-size: 0.875rem;
       font-weight: 700;
+      color: var(--text-primary) !important;
     }
     .comparison-table .badge-capsule {
       display: inline-flex;
@@ -633,16 +731,162 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
     }
     .comparison-table .latency {
       font-size: 0.75rem;
-      color: var(--primary-hover);
+      color: var(--primary-hover) !important;
       margin-left: 0.5rem;
       font-weight: 600;
     }
     .comparison-table .summary-text {
-      color: var(--text-secondary);
+      color: var(--text-secondary) !important;
     }
     .comparison-table .insight-text {
-      color: var(--text-muted);
+      color: var(--text-muted) !important;
       font-style: italic;
+    }
+
+    /* Right Split panel styles */
+    .chat-page-container {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .chat-main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-width: 0;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @media (min-width: 1024px) {
+      .chat-page-container.right-panel-active .chat-main-area {
+        flex: 0 0 60%;
+        max-width: 60%;
+        border-right: 1px solid var(--border-light);
+      }
+    }
+    
+    .chat-right-panel {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border-light);
+      background-color: var(--bg-secondary);
+      z-index: 10;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+
+    @media (min-width: 1024px) {
+      .chat-right-panel {
+        width: 40%;
+        max-width: 40%;
+      }
+    }
+    
+    @media (max-width: 1023px) {
+      .chat-right-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        z-index: 150;
+      }
+    }
+    
+    .panel-header {
+      height: var(--header-height);
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-light);
+      background-color: var(--bg-tertiary);
+    }
+    
+    .panel-title-area {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .panel-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .panel-tabs {
+      display: flex;
+      background-color: rgba(0, 0, 0, 0.2);
+      padding: 0.2rem;
+      border-radius: 8px;
+      gap: 0.25rem;
+    }
+    .light-theme .panel-tabs {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .panel-tab-btn {
+      background: none;
+      border: none;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .panel-tab-btn.active {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-card);
+    }
+    
+    .close-panel-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .close-panel-btn:hover {
+      color: var(--text-primary);
+    }
+    
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    /* Spacer for tab header */
+    .tab-spacer {
+      flex: 1;
+    }
+    
+    .dock-panel-btn {
+      background-color: var(--primary-glow) !important;
+      border: 1px solid var(--border-light) !important;
+      color: var(--primary) !important;
+      font-weight: 600 !important;
+      margin-left: 0.5rem;
+    }
+    .dock-panel-btn:hover {
+      background-color: rgba(139, 92, 246, 0.2) !important;
+      color: var(--text-primary) !important;
     }
   `]
 })
@@ -677,6 +921,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Active Tab state for each message ID
   activeTabsMap: Record<string, 'responses' | 'consensus' | 'compare'> = {};
+  
+  // Right Sliding Panel states
+  rightPanelOpen = signal<boolean>(false);
+  rightPanelType = signal<'consensus' | 'compare'>('consensus');
+  rightPanelMessage = signal<any | null>(null);
+
+  toggleRightPanel(msg: any): void {
+    if (this.rightPanelOpen() && this.rightPanelMessage()?.id === msg.id) {
+      this.closeRightPanel();
+    } else {
+      this.rightPanelMessage.set(msg);
+      this.rightPanelOpen.set(true);
+      // Switch inline tab back to responses
+      this.setActiveTab(msg.id, 'responses');
+    }
+  }
+
+  closeRightPanel(): void {
+    this.rightPanelOpen.set(false);
+  }
   
   // Polling fallback configuration
   private pollingIntervalId: any = null;
@@ -1035,5 +1299,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!verdict || !verdict.uniqueInsights) return '';
     const found = verdict.uniqueInsights.find(ui => ui.modelId === modelId);
     return found ? found.insight : '';
+  }
+
+  getModelSymbol(modelId: string): string {
+    if (modelId === 'gpt-4o') return '⁕';
+    if (modelId === 'gemini-flash') return '✦';
+    if (modelId === 'claude-haiku') return '▲';
+    if (modelId === 'deepseek-chat') return '◎';
+    return '🤖';
   }
 }
