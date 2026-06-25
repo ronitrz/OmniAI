@@ -17,7 +17,7 @@ import { ModelSelectorComponent, ModelInfo } from '../model-selector/model-selec
           class="btn-toggle" 
           (click)="showSelector.set(!showSelector())"
         >
-          <span>⚙️ Model Selection ({{ selectedIds.size }} active)</span>
+          <span>Model Selection ({{ selectedIds.size }} active)</span>
           <span>{{ showSelector() ? '▲ Hide' : '▼ Show' }}</span>
         </button>
       </div>

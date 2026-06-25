@@ -17,6 +17,7 @@ export interface AuthResult {
     id: string;
     email: string;
     fullName: string;
+    phoneNumber: string | null;
     createdAt: Date;
   };
 }
@@ -24,7 +25,8 @@ export interface AuthResult {
 export async function register(
   fullName: string,
   email: string,
-  password: string
+  password: string,
+  phoneNumber: string
 ): Promise<AuthResult> {
   // Check if email already exists
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -32,11 +34,17 @@ export async function register(
     throw new AppError(409, 'An account with this email already exists');
   }
 
+  // Check if phone number already exists
+  const existingPhone = await prisma.user.findUnique({ where: { phoneNumber } });
+  if (existingPhone) {
+    throw new AppError(409, 'An account with this phone number already exists');
+  }
+
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
   const user = await prisma.user.create({
-    data: { fullName, email, passwordHash },
-    select: { id: true, email: true, fullName: true, createdAt: true },
+    data: { fullName, email, passwordHash, phoneNumber },
+    select: { id: true, email: true, fullName: true, phoneNumber: true, createdAt: true },
   });
 
   const token = signToken({ userId: user.id, email: user.email });
@@ -65,7 +73,7 @@ export async function login(email: string, password: string): Promise<AuthResult
 export async function getMe(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, fullName: true, createdAt: true },
+    select: { id: true, email: true, fullName: true, phoneNumber: true, createdAt: true },
   });
 
   if (!user) {

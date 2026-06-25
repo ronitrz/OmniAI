@@ -12,6 +12,7 @@ model User {
   email        String      @unique
   passwordHash String      @map("password_hash")
   fullName     String      @map("full_name")
+  phoneNumber  String?     @unique @map("phone_number")
   createdAt    DateTime    @default(now()) @map("created_at")
   workspaces   Workspace[]
 
@@ -87,4 +88,14 @@ model JuryVerdict {
   message         Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@map("jury_verdicts")
+}
+
+model OtpVerification {
+  id          String   @id @default(uuid())
+  phoneNumber String   @map("phone_number")
+  code        String
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("otp_verifications")
 }

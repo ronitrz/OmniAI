@@ -15,8 +15,16 @@ import { Workspace } from '../../models/workspace.model';
   template: `
     <div class="sidebar" [class.open]="state.sidebarOpen()">
       <div class="sidebar-header">
-        <div class="logo-area" routerLink="/dashboard" (click)="state.clear(); state.sidebarOpen.set(false)">
-          <span class="logo-icon">⚖️</span>
+        <div class="logo-area" routerLink="/" (click)="state.clear(); state.sidebarOpen.set(false)">
+          <span class="logo-icon-svg-container">
+            <svg class="logo-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3L2 20H22L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <circle cx="12" cy="13.5" r="3.2" stroke="currentColor" stroke-width="1.5" fill="var(--bg-secondary)"/>
+              <circle cx="12" cy="13.5" r="1.5" fill="currentColor"/>
+              <path d="M7.5 13.5C8.8 11.2 11.2 10.5 12 10.5C12.8 10.5 15.2 11.2 16.5 13.5" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M7.5 13.5C8.8 15.8 11.2 16.5 12 16.5C12.8 16.5 15.2 15.8 16.5 13.5" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+          </span>
           <span class="logo-text">OmniAI</span>
         </div>
         <button class="close-sidebar-btn" (click)="state.sidebarOpen.set(false)" title="Close Menu">×</button>
@@ -24,7 +32,7 @@ import { Workspace } from '../../models/workspace.model';
 
       <div class="sidebar-content">
         <!-- Sidebar KPI Metrics Panel -->
-        <div class="sidebar-stats-panel glass" *ngIf="state.workspaces().length > 0">
+        <div class="sidebar-stats-panel glass" *ngIf="auth.currentUser() && state.workspaces().length > 0">
           <div class="stat-col">
             <span class="stat-num">{{ state.workspaces().length }}</span>
             <span class="stat-lbl">Workspaces</span>
@@ -36,44 +44,56 @@ import { Workspace } from '../../models/workspace.model';
           </div>
         </div>
 
-        <div class="section-title">
-          <span>WORKSPACES</span>
-          <button class="add-btn" (click)="openCreateModal()" title="New Workspace">+</button>
-        </div>
+        <ng-container *ngIf="auth.currentUser()">
+          <div class="section-title">
+            <span>WORKSPACES</span>
+            <button class="add-btn" (click)="openCreateModal()" title="New Workspace">+</button>
+          </div>
 
-        <div class="workspace-list" *ngIf="!isLoading(); else loadingShimmer">
-          <div *ngFor="let ws of state.workspaces()" class="workspace-item-container animate-fade-in">
-            <div
-              class="workspace-item"
-              [routerLink]="['/dashboard/workspace', ws.id]"
-              [class.active]="state.activeWorkspaceId() === ws.id"
-              (click)="state.sidebarOpen.set(false)"
-            >
-              <span class="ws-icon">📁</span>
-              <span class="ws-name">{{ ws.name }}</span>
-            </div>
-            
-            <!-- Conversations Sublist -->
-            <div class="session-sublist animate-fade-in" *ngIf="state.activeWorkspaceId() === ws.id">
+          <div class="workspace-list" *ngIf="!isLoading(); else loadingShimmer">
+            <div *ngFor="let ws of state.workspaces()" class="workspace-item-container animate-fade-in">
               <div
-                *ngFor="let session of state.sidebarSessions()"
-                class="session-subitem"
-                [routerLink]="['/dashboard/session', session.id]"
-                [class.sub-active]="state.activeSessionId() === session.id"
+                class="workspace-item"
+                [routerLink]="['/workspace', ws.id]"
+                [class.active]="state.activeWorkspaceId() === ws.id"
                 (click)="state.sidebarOpen.set(false)"
               >
-                <span class="session-icon">💬</span>
-                <span class="session-title-text">{{ session.title }}</span>
+                <svg class="ws-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; flex-shrink: 0;">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span class="ws-name">{{ ws.name }}</span>
               </div>
-              <div *ngIf="state.sidebarSessions().length === 0" class="empty-sublist">
-                No conversations yet.
+              
+              <!-- Conversations Sublist -->
+              <div class="session-sublist animate-fade-in" *ngIf="state.activeWorkspaceId() === ws.id">
+                <div
+                  *ngFor="let session of state.sidebarSessions()"
+                  class="session-subitem"
+                  [routerLink]="['/session', session.id]"
+                  [class.sub-active]="state.activeSessionId() === session.id"
+                  (click)="state.sidebarOpen.set(false)"
+                >
+                  <svg class="session-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; flex-shrink: 0;">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  <span class="session-title-text">{{ session.title }}</span>
+                </div>
+                <div *ngIf="state.sidebarSessions().length === 0" class="empty-sublist">
+                  No conversations yet.
+                </div>
               </div>
             </div>
+            
+            <div *ngIf="state.workspaces().length === 0" class="empty-state">
+              No workspaces yet.
+            </div>
           </div>
-          
-          <div *ngIf="state.workspaces().length === 0" class="empty-state">
-            No workspaces yet.
-          </div>
+        </ng-container>
+
+        <!-- Guest Sidebar Prompt -->
+        <div class="guest-sidebar-prompt animate-fade-in" *ngIf="!auth.currentUser()">
+          <h4>Create workspaces</h4>
+          <p>Sign up or log in to customize workspaces, create multiple sessions, and save your chat history.</p>
         </div>
 
         <ng-template #loadingShimmer>
@@ -83,51 +103,86 @@ import { Workspace } from '../../models/workspace.model';
         </ng-template>
       </div>
 
-      <div class="sidebar-footer" *ngIf="auth.currentUser() as user">
-        <!-- Floating Profile Dropdown Menu -->
-        <div class="profile-dropdown animate-fade-in" *ngIf="profileMenuOpen()">
-          <div class="dropdown-header">
-            <span class="avatar-small">{{ user.fullName.slice(0, 2).toUpperCase() }}</span>
-            <div class="header-details">
-              <span class="dropdown-user-name">{{ user.fullName }}</span>
-              <span class="dropdown-user-email">{{ user.email }}</span>
+      <div class="sidebar-footer">
+        <!-- Logged In Footer Profile -->
+        <ng-container *ngIf="auth.currentUser() as user">
+          <!-- Floating Profile Dropdown Menu -->
+          <div class="profile-dropdown animate-fade-in" *ngIf="profileMenuOpen()">
+            <div class="dropdown-header">
+              <span class="avatar-small">{{ user.fullName.slice(0, 2).toUpperCase() }}</span>
+              <div class="header-details">
+                <span class="dropdown-user-name">{{ user.fullName }}</span>
+                <span class="dropdown-user-email">{{ user.email }}</span>
+              </div>
             </div>
+            
+            <div class="dropdown-divider"></div>
+            
+            <button class="dropdown-item" (click)="state.toggleTheme(); $event.stopPropagation()" type="button">
+              <svg *ngIf="state.theme() === 'dark'" class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg *ngIf="state.theme() !== 'dark'" class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              <span class="item-text">Switch to {{ state.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+            </button>
+            
+            <button class="dropdown-item" (click)="showMockSettings(); $event.stopPropagation()" type="button">
+              <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span class="item-text">Settings</span>
+            </button>
+            
+            <button class="dropdown-item" (click)="showMockAnalytics(); $event.stopPropagation()" type="button">
+              <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+              <span class="item-text">Usage Stats</span>
+            </button>
+            
+            <div class="dropdown-divider"></div>
+            
+            <button class="dropdown-item logout-item" (click)="onLogout(); $event.stopPropagation()" type="button">
+              <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span class="item-text">Log Out</span>
+            </button>
           </div>
-          
-          <div class="dropdown-divider"></div>
-          
-          <button class="dropdown-item" (click)="state.toggleTheme(); $event.stopPropagation()" type="button">
-            <span class="item-icon">{{ state.theme() === 'dark' ? '☀️' : '🌙' }}</span>
-            <span class="item-text">Switch to {{ state.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
-          </button>
-          
-          <button class="dropdown-item" (click)="showMockSettings(); $event.stopPropagation()" type="button">
-            <span class="item-icon">⚙️</span>
-            <span class="item-text">Settings</span>
-          </button>
-          
-          <button class="dropdown-item" (click)="showMockAnalytics(); $event.stopPropagation()" type="button">
-            <span class="item-icon">📊</span>
-            <span class="item-text">Usage Stats</span>
-          </button>
-          
-          <div class="dropdown-divider"></div>
-          
-          <button class="dropdown-item logout-item" (click)="onLogout(); $event.stopPropagation()" type="button">
-            <span class="item-icon">🚪</span>
-            <span class="item-text">Log Out</span>
-          </button>
-        </div>
 
-        <!-- Profile Trigger Button -->
-        <button class="profile-trigger-btn" (click)="toggleProfileMenu($event)" type="button">
-          <div class="user-avatar">{{ user.fullName.slice(0, 2).toUpperCase() }}</div>
-          <div class="user-details">
-            <div class="user-name">{{ user.fullName }}</div>
-            <div class="user-email">{{ user.email }}</div>
+          <!-- Profile Trigger Button -->
+          <button class="profile-trigger-btn" (click)="toggleProfileMenu($event)" type="button">
+            <div class="user-avatar">{{ user.fullName.slice(0, 2).toUpperCase() }}</div>
+            <div class="user-details">
+              <div class="user-name">{{ user.fullName }}</div>
+              <div class="user-email">{{ user.email }}</div>
+            </div>
+            <span class="chevron-icon">▲</span>
+          </button>
+        </ng-container>
+
+        <!-- Logged Out (Guest) Footer Auth Buttons -->
+        <ng-container *ngIf="!auth.currentUser()">
+          <div class="auth-buttons-container">
+            <button type="button" class="btn-sidebar-signup" (click)="state.authModalType.set('register')">Sign up</button>
+            <button type="button" class="btn-sidebar-login" (click)="state.authModalType.set('login')">Log in</button>
           </div>
-          <span class="chevron-icon">▲</span>
-        </button>
+        </ng-container>
       </div>
     </div>
 
@@ -219,8 +274,17 @@ import { Workspace } from '../../models/workspace.model';
       gap: 0.75rem;
       cursor: pointer;
     }
-    .logo-icon {
-      font-size: 1.5rem;
+    .logo-icon-svg-container {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
     .logo-text {
       font-size: 1.25rem;
@@ -400,6 +464,65 @@ import { Workspace } from '../../models/workspace.model';
       flex-direction: column;
       position: relative;
       background-color: rgba(0, 0, 0, 0.15);
+    }
+    .auth-buttons-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      width: 100%;
+    }
+    .btn-sidebar-login, .btn-sidebar-signup {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+      border: none;
+    }
+    .btn-sidebar-login {
+      background: none;
+      border: 1px solid var(--border-light);
+      color: var(--text-primary);
+    }
+    .btn-sidebar-login:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+      border-color: var(--border-hover);
+    }
+    .btn-sidebar-signup {
+      background-color: var(--primary);
+      color: #ffffff;
+    }
+    .btn-sidebar-signup:hover {
+      background-color: var(--primary-hover);
+    }
+    .guest-sidebar-prompt {
+      padding: 1.25rem 1rem;
+      border-radius: 12px;
+      background-color: rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-light);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .guest-sidebar-prompt .prompt-icon {
+      font-size: 1.75rem;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    .guest-sidebar-prompt h4 {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+    .guest-sidebar-prompt p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin: 0;
     }
     .profile-trigger-btn {
       width: 100%;
@@ -665,11 +788,13 @@ export class SidebarComponent implements OnInit {
   }
 
   showMockSettings(): void {
-    alert("Settings panel coming soon! Explore themes and workspace options here.");
+    this.state.settingsActiveTab.set('general');
+    this.state.settingsModalOpen.set(true);
   }
 
   showMockAnalytics(): void {
-    alert("Usage Analytics dashboard is in development. Track query tokens and consensus counts here.");
+    this.state.settingsActiveTab.set('other');
+    this.state.settingsModalOpen.set(true);
   }
 
   @HostListener('document:click')

@@ -94,4 +94,5 @@ async function start() {
 
 start();
 
+// Trigger reload
 export default app;

@@ -9,18 +9,16 @@ import { ChatComponent } from './features/chat/chat.component';
 import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
   {
-    path: 'dashboard',
+    path: '',
     component: DashboardComponent,
-    canActivate: [authGuard],
     children: [
-      { path: '', component: WorkspaceListComponent },
-      { path: 'workspace/:id', component: WorkspaceDetailComponent },
-      { path: 'session/:id', component: ChatComponent }
+      { path: '', component: ChatComponent },
+      { path: 'login', component: ChatComponent },
+      { path: 'register', component: ChatComponent },
+      { path: 'workspace/:id', component: WorkspaceDetailComponent, canActivate: [authGuard] },
+      { path: 'session/:id', component: ChatComponent, canActivate: [authGuard] }
     ]
   },
-  { path: '**', redirectTo: '/login' }
+  { path: '**', redirectTo: '' }
 ];

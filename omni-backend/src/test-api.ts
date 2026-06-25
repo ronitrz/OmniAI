@@ -4,6 +4,8 @@
 // Run: npx ts-node src/test-api.ts
 // Requires the server to be running on localhost:3000
 
+import { prisma } from './config/prisma';
+
 const BASE_URL = 'http://localhost:3000/api';
 
 // ── Utility ────────────────────────────────────────────────────────────────
@@ -65,10 +67,32 @@ async function runTests() {
   // ── PROVIDERS ─────────────────────────────────────────────
   {
     // Need token for providers — get one first via login or register
+    const email = `test_${Date.now()}@omni.ai`;
+    const phoneNumber = `+1555${Math.floor(100000 + Math.random() * 900000)}`;
+
+    // 1. Send OTP
+    const sendOtpRes = await request('POST', '/auth/send-otp', {
+      email,
+      phoneNumber,
+    });
+    log('POST /auth/send-otp', sendOtpRes.status, sendOtpRes.data);
+    assert(sendOtpRes.status === 200, 'Send OTP returns 200');
+
+    // 2. Fetch OTP from database
+    const otpRecord = await prisma.otpVerification.findFirst({
+      where: { phoneNumber },
+      orderBy: { createdAt: 'desc' },
+    });
+    assert(!!otpRecord, 'OTP record exists in database');
+    const otpCode = otpRecord!.code;
+
+    // 3. Register
     const regResult = await request('POST', '/auth/register', {
       fullName: 'Test User',
-      email: `test_${Date.now()}@omni.ai`,
+      email,
       password: 'password123',
+      phoneNumber,
+      otpCode,
     });
     log('POST /auth/register', regResult.status, regResult.data);
     assert(regResult.status === 201, 'Register returns 201');

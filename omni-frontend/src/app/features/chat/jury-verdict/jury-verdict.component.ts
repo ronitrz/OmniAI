@@ -14,7 +14,6 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
     <div class="verdict-card" *ngIf="verdict">
       <div class="verdict-header">
         <div class="header-main">
-          <span class="scale-icon">⚖️</span>
           <h2 class="title">Jury Verdict</h2>
         </div>
         <span class="badge" [ngClass]="verdict.confidenceLabel.toLowerCase()">
@@ -36,21 +35,18 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
           <!-- Metric counters grid -->
           <div class="metrics-summary-grid">
             <div class="metric-card glass">
-              <span class="m-icon">🤝</span>
               <div class="m-details">
                 <span class="m-val">{{ verdict.agreements.length }}</span>
                 <span class="m-label">Agreements</span>
               </div>
             </div>
             <div class="metric-card glass">
-              <span class="m-icon">⚡</span>
               <div class="m-details">
                 <span class="m-val">{{ verdict.contradictions.length }}</span>
                 <span class="m-label">Contradictions</span>
               </div>
             </div>
             <div class="metric-card glass">
-              <span class="m-icon">💡</span>
               <div class="m-details">
                 <span class="m-val">{{ verdict.uniqueInsights.length }}</span>
                 <span class="m-label">Unique Insights</span>
@@ -61,7 +57,7 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
           <p class="summary-text" *ngIf="!verdict.consensusText">No consensus text available.</p>
           
           <div class="recommendation-card" *ngIf="verdict.recommendation">
-            <div class="recommendation-badge">💡 ACTIONABLE RECOMMENDATION</div>
+            <div class="recommendation-badge">ACTIONABLE RECOMMENDATION</div>
             <p class="recommendation-text">{{ verdict.recommendation }}</p>
           </div>
         </div>
@@ -76,7 +72,7 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
             [class.active]="activeTab() === 'answer'"
             (click)="activeTab.set('answer')"
           >
-            ✦ Consensus Answer
+            Consensus Answer
           </button>
           <button 
             type="button" 
@@ -84,7 +80,7 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
             [class.active]="activeTab() === 'contradictions'"
             (click)="activeTab.set('contradictions')"
           >
-            ⚡ Contradictions
+            Contradictions
             <span class="tab-badge">{{ verdict.contradictions.length }}</span>
           </button>
           <button 
@@ -93,7 +89,7 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
             [class.active]="activeTab() === 'insights'"
             (click)="activeTab.set('insights')"
           >
-            💡 Unique Insights
+            Unique Insights
             <span class="tab-badge">{{ verdict.uniqueInsights.length }}</span>
           </button>
         </div>
@@ -111,7 +107,7 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
           <div *ngIf="activeTab() === 'contradictions'">
             <div class="contradictions-list" *ngIf="verdict.contradictions.length > 0; else noContradictions">
               <div *ngFor="let item of verdict.contradictions" class="contradiction-item">
-                <h4 class="contradiction-topic">⚔️ {{ item.topic }}</h4>
+                <h4 class="contradiction-topic">{{ item.topic }}</h4>
                 <div class="positions-grid">
                   <div *ngFor="let pos of getPositionsArray(item.positions)" class="position-card">
                     <!-- Colored border accent matching the model -->

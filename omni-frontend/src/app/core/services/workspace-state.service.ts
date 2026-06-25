@@ -4,6 +4,15 @@ import { ApiService } from './api.service';
 import { Session } from '../../shared/models/session.model';
 import { Workspace } from '../../shared/models/workspace.model';
 
+export interface ConfirmModalState {
+  title: string;
+  message: string;
+  type: 'danger' | 'info';
+  confirmText: string;
+  cancelText?: string;
+  resolve: (val: boolean) => void;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -16,6 +25,41 @@ export class WorkspaceStateService {
   sidebarSessions = signal<Session[]>([]);
   sidebarOpen = signal<boolean>(typeof window !== 'undefined' ? window.innerWidth > 768 : true);
   theme = signal<'dark' | 'light'>('dark');
+  authModalType = signal<'login' | 'register' | null>(null);
+  confirmModal = signal<ConfirmModalState | null>(null);
+  settingsModalOpen = signal<boolean>(false);
+  settingsActiveTab = signal<'general' | 'account' | 'other'>('general');
+
+  confirm(title: string, message: string, options?: { type?: 'danger' | 'info'; confirmText?: string; cancelText?: string }): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      this.confirmModal.set({
+        title,
+        message,
+        type: options?.type || 'info',
+        confirmText: options?.confirmText || 'Confirm',
+        cancelText: options?.cancelText || 'Cancel',
+        resolve: (val: boolean) => {
+          this.confirmModal.set(null);
+          resolve(val);
+        }
+      });
+    });
+  }
+
+  alert(title: string, message: string, options?: { type?: 'danger' | 'info'; confirmText?: string }): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.confirmModal.set({
+        title,
+        message,
+        type: options?.type || 'info',
+        confirmText: options?.confirmText || 'OK',
+        resolve: () => {
+          this.confirmModal.set(null);
+          resolve();
+        }
+      });
+    });
+  }
 
   toggleSidebar(): void {
     this.sidebarOpen.set(!this.sidebarOpen());

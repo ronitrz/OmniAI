@@ -16,7 +16,7 @@ import { Session } from '../../../shared/models/session.model';
     <div class="workspace-detail-container animate-fade-in" *ngIf="workspace()">
       <!-- Error Banner -->
       <div class="error-banner animate-fade-in" *ngIf="errorMsg()">
-        <span>⚠️ {{ errorMsg() }}</span>
+        <span>{{ errorMsg() }}</span>
         <button class="close-error-btn" (click)="errorMsg.set(null)">×</button>
       </div>
 
@@ -26,7 +26,7 @@ import { Session } from '../../../shared/models/session.model';
           <button class="hamburger-btn" (click)="state.toggleSidebar()" title="Toggle Sidebar">☰</button>
           <div>
             <div class="breadcrumbs">
-              <span routerLink="/dashboard" (click)="state.clear()" class="breadcrumb-link">Workspaces</span>
+              <span routerLink="/" (click)="state.clear()" class="breadcrumb-link">Workspaces</span>
               <span class="separator">/</span>
               <span class="current">{{ workspace()?.name }}</span>
             </div>
@@ -51,21 +51,34 @@ import { Session } from '../../../shared/models/session.model';
             <span class="kpi-num">{{ sessions().length }}</span>
             <span class="kpi-lbl">Conversations</span>
           </div>
-          <span class="kpi-icon">💬</span>
+          <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: var(--text-muted);">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
         </div>
         <div class="kpi-card glass">
           <div class="kpi-info">
             <span class="kpi-num">4</span>
             <span class="kpi-lbl">Active AI Models</span>
           </div>
-          <span class="kpi-icon">🤖</span>
+          <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: var(--text-muted);">
+            <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+            <circle cx="12" cy="5" r="2"></circle>
+            <path d="M12 7v4"></path>
+            <line x1="8" y1="16" x2="8" y2="16"></line>
+            <line x1="16" y1="16" x2="16" y2="16"></line>
+          </svg>
         </div>
         <div class="kpi-card glass">
           <div class="kpi-info">
             <span class="kpi-num-text">{{ getLastActiveDate() | date:'mediumDate' }}</span>
             <span class="kpi-lbl">Last Active</span>
           </div>
-          <span class="kpi-icon">📅</span>
+          <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: var(--text-muted);">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
         </div>
       </div>
 
@@ -77,10 +90,12 @@ import { Session } from '../../../shared/models/session.model';
           <div 
             *ngFor="let session of sessions()" 
             class="card session-card animate-fade-in"
-            [routerLink]="['/dashboard/session', session.id]"
+            [routerLink]="['/session', session.id]"
           >
             <div class="session-card-header">
-              <span class="chat-icon">💬</span>
+              <svg class="chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; color: var(--primary-hover);">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
               <button 
                 class="delete-session-btn" 
                 (click)="onDeleteSession(session.id, $event)" 
@@ -98,7 +113,6 @@ import { Session } from '../../../shared/models/session.model';
 
         <ng-template #emptyState>
           <div class="empty-layout glass">
-            <div class="empty-icon">💬</div>
             <h3>No Conversations Yet</h3>
             <p>Start a new conversation with multiple AIs in this workspace.</p>
             <button class="btn btn-primary" (click)="onCreateSession()">
@@ -379,11 +393,11 @@ export class WorkspaceDetailComponent implements OnInit {
           if (found) {
             this.workspace.set(found);
           } else {
-            this.router.navigate(['/dashboard']);
+            this.router.navigate(['/']);
           }
         },
         error: () => {
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/']);
         }
       });
     } else {
@@ -391,7 +405,7 @@ export class WorkspaceDetailComponent implements OnInit {
       if (found) {
         this.workspace.set(found);
       } else {
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/']);
       }
     }
   }
@@ -413,7 +427,7 @@ export class WorkspaceDetailComponent implements OnInit {
     }).subscribe({
       next: (res) => {
         this.state.loadSidebarSessions(ws.id);
-        this.router.navigate(['/dashboard/session', res.session.id]);
+        this.router.navigate(['/session', res.session.id]);
       },
       error: (err) => {
         this.errorMsg.set(err.error?.message || 'Failed to create conversation. Please try again.');
@@ -421,17 +435,23 @@ export class WorkspaceDetailComponent implements OnInit {
     });
   }
 
-  onDeleteWorkspace(): void {
+  async onDeleteWorkspace(): Promise<void> {
     const ws = this.workspace();
     if (!ws) return;
 
-    if (confirm(`Are you sure you want to delete workspace "${ws.name}"? This will delete all conversations inside it.`)) {
+    const confirmed = await this.state.confirm(
+      'Delete Workspace',
+      `Are you sure you want to delete workspace "${ws.name}"? This will delete all conversations inside it.`,
+      { type: 'danger', confirmText: 'Delete', cancelText: 'Cancel' }
+    );
+
+    if (confirmed) {
       this.errorMsg.set(null);
       this.api.delete(`/workspaces/${ws.id}`).subscribe({
         next: () => {
           this.state.workspaces.update(list => list.filter(w => w.id !== ws.id));
           this.state.clear();
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/']);
         },
         error: (err) => {
           this.errorMsg.set(err.error?.message || 'Failed to delete workspace. Please try again.');
@@ -440,10 +460,16 @@ export class WorkspaceDetailComponent implements OnInit {
     }
   }
 
-  onDeleteSession(sessionId: string, event: Event): void {
+  async onDeleteSession(sessionId: string, event: Event): Promise<void> {
     event.stopPropagation(); // Prevent card navigation trigger
 
-    if (confirm('Are you sure you want to delete this conversation?')) {
+    const confirmed = await this.state.confirm(
+      'Delete Conversation',
+      'Are you sure you want to delete this conversation?',
+      { type: 'danger', confirmText: 'Delete', cancelText: 'Cancel' }
+    );
+
+    if (confirmed) {
       this.errorMsg.set(null);
       this.api.delete(`/sessions/${sessionId}`).subscribe({
         next: () => {

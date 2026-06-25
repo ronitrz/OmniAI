@@ -33,28 +33,44 @@ import { Workspace } from '../../../shared/models/workspace.model';
             <span class="kpi-num">{{ getTotalConversations() }}</span>
             <span class="kpi-lbl">Total Conversations</span>
           </div>
-          <span class="kpi-icon">💬</span>
+          <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: var(--text-muted);">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
         </div>
         <div class="kpi-card glass">
           <div class="kpi-info">
             <span class="kpi-num">{{ getResearchReportsCount() }}</span>
             <span class="kpi-lbl">Research Briefs</span>
           </div>
-          <span class="kpi-icon">📄</span>
+          <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: var(--text-muted);">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
         </div>
         <div class="kpi-card glass">
           <div class="kpi-info">
             <span class="kpi-num">{{ getTotalConversations() }}</span>
             <span class="kpi-lbl">Consensus Verdicts</span>
           </div>
-          <span class="kpi-icon">⚖️</span>
+          <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: var(--text-muted);">
+            <path d="M22 7h-6M8 7H2M12 2v20M12 7h10M12 7H2M17 7v6a4 4 0 0 1-4 4h-2a4 4 0 0 1-4-4V7"></path>
+          </svg>
         </div>
         <div class="kpi-card glass">
           <div class="kpi-info">
             <span class="kpi-num">4</span>
             <span class="kpi-lbl">Active AI Engines</span>
           </div>
-          <span class="kpi-icon">🤖</span>
+          <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: var(--text-muted);">
+            <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+            <circle cx="12" cy="5" r="2"></circle>
+            <path d="M12 7v4"></path>
+            <line x1="8" y1="16" x2="8" y2="16"></line>
+            <line x1="16" y1="16" x2="16" y2="16"></line>
+          </svg>
         </div>
       </div>
 
@@ -65,7 +81,9 @@ import { Workspace } from '../../../shared/models/workspace.model';
           [routerLink]="['/dashboard/workspace', ws.id]"
         >
           <div class="card-header">
-            <span class="icon">📁</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; color: var(--primary-hover);">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
             <span class="date">{{ ws.createdAt | date:'shortDate' }}</span>
           </div>
           <h3 class="ws-title">{{ ws.name }}</h3>
@@ -78,7 +96,6 @@ import { Workspace } from '../../../shared/models/workspace.model';
 
       <ng-template #emptyState>
         <div class="empty-layout glass">
-          <div class="empty-icon">📂</div>
           <h3>No Workspaces Yet</h3>
           <p>Get started by creating your first workspace to organize your conversations.</p>
           <button class="btn btn-primary" (click)="openCreateModal()">

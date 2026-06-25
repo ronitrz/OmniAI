@@ -2,31 +2,27 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { WorkspaceStateService } from '../../../core/services/workspace-state.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   template: `
-    <div class="page-wrapper">
-      <!-- Floating Theme Switcher -->
-      <button 
-        class="floating-theme-btn" 
-        (click)="state.toggleTheme()" 
-        type="button" 
-        [title]="state.theme() === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-      >
-        <span *ngIf="state.theme() === 'dark'">☀️</span>
-        <span *ngIf="state.theme() === 'light'">🌙</span>
-      </button>
-
-      <div class="login-box">
+    <div class="login-box">
         <!-- Logo -->
         <div class="logo-wrapper">
-          <span class="logo-icon">⚖️</span>
+          <span class="logo-icon-svg-container">
+            <svg class="logo-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3L2 20H22L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <circle cx="12" cy="13.5" r="3.2" stroke="currentColor" stroke-width="1.5" fill="var(--bg-secondary)"/>
+              <circle cx="12" cy="13.5" r="1.5" fill="currentColor"/>
+              <path d="M7.5 13.5C8.8 11.2 11.2 10.5 12 10.5C12.8 10.5 15.2 11.2 16.5 13.5" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M7.5 13.5C8.8 15.8 11.2 16.5 12 16.5C12.8 16.5 15.2 15.8 16.5 13.5" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+          </span>
           <span class="logo-text">OmniAI</span>
         </div>
 
@@ -77,7 +73,7 @@ import { WorkspaceStateService } from '../../../core/services/workspace-state.se
 
         <div class="signup-prompt">
           Don't have an account?
-          <a routerLink="/register" class="link-signup">Sign up</a>
+          <button type="button" class="link-btn" (click)="switchToSignup($event)">Sign up</button>
         </div>
 
         <div class="divider">
@@ -115,42 +111,24 @@ import { WorkspaceStateService } from '../../../core/services/workspace-state.se
             <span>Continue with Apple</span>
           </button>
         </div>
-      </div>
     </div>
   `,
   styles: [`
-    .page-wrapper {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: var(--bg-primary);
-      color: var(--text-primary);
-      position: relative;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    .link-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 0;
+    }
+    .link-btn:hover {
+      text-decoration: underline;
     }
 
-    .floating-theme-btn {
-      position: absolute;
-      top: 1.5rem;
-      right: 1.5rem;
-      background: none;
-      border: 1px solid var(--border-light);
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      color: var(--text-primary);
-      font-size: 1.125rem;
-    }
-    .floating-theme-btn:hover {
-      background-color: var(--bg-secondary);
-      border-color: var(--border-hover);
-    }
+
 
     .login-box {
       width: 100%;
@@ -168,8 +146,17 @@ import { WorkspaceStateService } from '../../../core/services/workspace-state.se
       gap: 0.5rem;
       margin-bottom: 2.5rem;
     }
-    .logo-icon {
-      font-size: 2.25rem;
+    .logo-icon-svg-container {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
     .logo-text {
       font-size: 1.5rem;
@@ -328,6 +315,11 @@ export class LoginComponent {
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
 
+  switchToSignup(event: Event): void {
+    event.preventDefault();
+    this.state.authModalType.set('register');
+  }
+
   onSubmit(): void {
     if (!this.email || !this.password) return;
 
@@ -337,7 +329,11 @@ export class LoginComponent {
     this.authService.login(this.email, this.password).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.router.navigate(['/dashboard']);
+        this.state.authModalType.set(null);
+        this.state.loadWorkspaces();
+        if (this.router.url.includes('/login')) {
+          this.router.navigate(['/']);
+        }
       },
       error: (err) => {
         this.isLoading.set(false);

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { SseService, SseEvent } from '../../core/services/sse.service';
 import { WorkspaceStateService } from '../../core/services/workspace-state.service';
 import { ModelInfo } from './model-selector/model-selector.component';
@@ -30,9 +31,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
   template: `
     <div class="chat-page-container" [class.right-panel-active]="rightPanelOpen()">
       <div class="chat-main-area">
-        <!-- Floating Stream Toast -->
         <div class="toast-error animate-fade-in" *ngIf="streamError()">
-          <span class="toast-icon">⚠️</span>
           <span class="toast-text">{{ streamError() }}</span>
           <button class="close-toast-btn" (click)="streamError.set(null)">×</button>
         </div>
@@ -41,7 +40,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
         <div class="chat-header glass">
           <div class="header-left">
             <button class="hamburger-btn" (click)="state.toggleSidebar()" title="Toggle Sidebar">☰</button>
-            <button class="back-btn" [routerLink]="['/dashboard/workspace', state.activeWorkspaceId()]">
+            <button class="back-btn" *ngIf="auth.currentUser() && state.activeWorkspaceId()" [routerLink]="['/workspace', state.activeWorkspaceId()]">
               ← Back
             </button>
             <div class="session-info">
@@ -59,9 +58,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
         <!-- Chat Conversation Messages (Scrollable) -->
         <div class="chat-messages-area" #scrollContainer>
           <div class="messages-list">
-            <!-- Welcome message for new sessions -->
             <div class="welcome-box glass animate-fade-in" *ngIf="messagesList().length === 0 && !isGenerating()">
-              <span class="icon">⚖️</span>
               <h2>AI Consensus Room</h2>
               <p>Type a prompt below to consult multiple AI engines. The Jury system will compile the results, highlight disagreements, and recommend the best synthesized answer.</p>
             </div>
@@ -90,7 +87,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
                     [class.active]="getActiveTab(msg.id) === 'responses'"
                     (click)="setActiveTab(msg.id, 'responses')"
                   >
-                    💬 Responses
+                    Responses
                   </button>
                   <button 
                     type="button" 
@@ -98,7 +95,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
                     [class.active]="getActiveTab(msg.id) === 'consensus'"
                     (click)="setActiveTab(msg.id, 'consensus')"
                   >
-                    ⚖️ Jury Verdict
+                    Jury Verdict
                   </button>
                   <button 
                     type="button" 
@@ -106,7 +103,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
                     [class.active]="getActiveTab(msg.id) === 'compare'"
                     (click)="setActiveTab(msg.id, 'compare')"
                   >
-                    📊 Compare Matrix
+                    Compare Matrix
                   </button>
                   
                   <div class="tab-spacer"></div>
@@ -242,10 +239,8 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
                 ></app-research-report>
               </div>
 
-              <!-- Redesigned Deliberating loader -->
               <div class="verdict-loading-card glass animate-fade-in" *ngIf="verdictLoading()">
                 <div class="loader-content">
-                  <span class="deliberation-icon">⚖️</span>
                   <div class="loader-text">
                     <h3>Jury Deliberating Consensus</h3>
                     <p>Resolving contradictions, parsing models' claims, and synthesizing final recommendations...</p>
@@ -277,7 +272,6 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
       <div class="chat-right-panel glass animate-fade-in" *ngIf="rightPanelOpen() && rightPanelMessage() as msg">
         <div class="panel-header">
           <div class="panel-title-area">
-            <span class="panel-icon">⚖️</span>
             <span class="panel-title">Consensus Dock</span>
           </div>
           
@@ -368,6 +362,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
         </div>
       </div>
     </div>
+
   `,
   styles: [`
     .chat-page-container {
@@ -921,17 +916,12 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
       flex: 1;
     }
     
-    .dock-panel-btn {
-      background-color: var(--primary-glow) !important;
-      border: 1px solid var(--border-light) !important;
-      color: var(--primary) !important;
-      font-weight: 600 !important;
-      margin-left: 0.5rem;
-    }
     .dock-panel-btn:hover {
       background-color: rgba(139, 92, 246, 0.2) !important;
       color: var(--text-primary) !important;
     }
+
+
   `]
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
@@ -940,6 +930,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private api = inject(ApiService);
   private sseService = inject(SseService);
   state = inject(WorkspaceStateService);
+  auth = inject(AuthService);
+
+  private autoSendEvent: any = null;
+
+  constructor() {
+    const navigation = this.router.getCurrentNavigation();
+    this.autoSendEvent = navigation?.extras?.state?.['autoSendEvent'];
+  }
 
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
@@ -1009,6 +1007,20 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.sessionId.set(id);
         this.state.activeSessionId.set(id);
         this.loadSessionHistory(id);
+
+        if (this.autoSendEvent) {
+          const event = this.autoSendEvent;
+          this.autoSendEvent = null; // clear it
+          setTimeout(() => {
+            this.onSendMessage(event);
+          }, 150);
+        }
+      } else {
+        // Clear active session/workspace if navigating to root "/"
+        this.sessionId.set(null);
+        this.state.activeSessionId.set(null);
+        this.messagesList.set([]);
+        this.sessionTitle.set('New Conversation');
       }
     });
   }
@@ -1062,7 +1074,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       },
       error: () => {
         this.state.clear();
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/']);
       }
     });
   }
@@ -1077,8 +1089,56 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onSendMessage(event: { content: string; selectedModels: string[]; mode: 'standard' | 'research' }): void {
+    if (!this.auth.currentUser()) {
+      this.state.authModalType.set('login');
+      return;
+    }
+
     const sid = this.sessionId();
-    if (!sid) return;
+    if (!sid) {
+      // Auto-create workspace & session for logged-in users starting chat from root "/"
+      this.isGenerating.set(true); // show loader immediately
+      let wsId = this.state.activeWorkspaceId() || (this.state.workspaces().length > 0 ? this.state.workspaces()[0].id : null);
+      
+      const createSessionAndSend = (targetWsId: string) => {
+        this.api.post<{ session: any }>(`/workspaces/${targetWsId}/sessions`, {
+          title: event.content.slice(0, 30) || 'New Conversation'
+        }).subscribe({
+          next: (sessionRes) => {
+            this.state.activeWorkspaceId.set(targetWsId);
+            this.state.loadSidebarSessions(targetWsId);
+            // Navigate to the session route and pass the autoSendEvent in state
+            this.router.navigate(['/session', sessionRes.session.id], {
+              state: { autoSendEvent: event }
+            });
+          },
+          error: (err) => {
+            this.isGenerating.set(false);
+            this.streamError.set('Failed to create session. Please try again.');
+          }
+        });
+      };
+
+      if (!wsId) {
+        // Create default workspace
+        this.api.post<{ workspace: any }>('/workspaces', {
+          name: 'My Workspace',
+          description: 'Default personal workspace'
+        }).subscribe({
+          next: (wsRes) => {
+            this.state.workspaces.update(list => [...list, wsRes.workspace]);
+            createSessionAndSend(wsRes.workspace.id);
+          },
+          error: (err) => {
+            this.isGenerating.set(false);
+            this.streamError.set('Failed to initialize workspace. Please try again.');
+          }
+        });
+      } else {
+        createSessionAndSend(wsId);
+      }
+      return;
+    }
 
     this.currentPromptText.set(event.content);
     this.currentMode.set(event.mode);
