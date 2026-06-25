@@ -12,143 +12,108 @@ import { WorkspaceStateService } from '../../../core/services/workspace-state.se
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="page-wrapper">
-      <!-- Fixed Premium Top Navbar -->
-      <nav class="auth-navbar glass">
-        <div class="nav-container">
-          <div class="logo-area" routerLink="/">
-            <span class="logo-icon">⚖️</span>
-            <span class="logo-text">OmniAI</span>
-          </div>
-          <div class="navbar-actions">
-            <!-- Theme Toggle Button -->
-            <button 
-              class="theme-toggle-btn" 
-              (click)="state.toggleTheme()" 
-              type="button" 
-              [title]="state.theme() === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-            >
-              <span *ngIf="state.theme() === 'dark'">☀️</span>
-              <span *ngIf="state.theme() === 'light'">🌙</span>
-            </button>
-            <a routerLink="/register" class="btn btn-secondary nav-btn">Sign Up</a>
-          </div>
-        </div>
-      </nav>
+      <!-- Floating Theme Switcher -->
+      <button 
+        class="floating-theme-btn" 
+        (click)="state.toggleTheme()" 
+        type="button" 
+        [title]="state.theme() === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+      >
+        <span *ngIf="state.theme() === 'dark'">☀️</span>
+        <span *ngIf="state.theme() === 'light'">🌙</span>
+      </button>
 
-      <div class="split-layout">
-        <!-- Left Section: Premium SaaS Hero Showcase -->
-        <div class="hero-section">
-          <div class="hero-content">
-            <div class="version-tag">Consensus Engine v2.0</div>
-            <h1 class="hero-title">
-              Supercharge decisions with <span class="gradient-text">AI Consensus</span>
-            </h1>
-            <p class="hero-subtitle">
-              Deploy GPT-4o, Gemini, Claude, and DeepSeek simultaneously. Analyze disagreements, isolate unique insights, and synthesize high-fidelity logic using our advanced Jury system.
-            </p>
-
-            <!-- Visual Dashboard Mockup -->
-            <div class="hero-mockup glass animate-fade-in">
-              <div class="mockup-header">
-                <div class="window-dots">
-                  <span class="dot red"></span>
-                  <span class="dot yellow"></span>
-                  <span class="dot green"></span>
-                </div>
-                <div class="mockup-title">Consensus Playground</div>
-              </div>
-              <div class="mockup-body">
-                <div class="mockup-grid">
-                  <div class="mockup-card gpt">
-                    <div class="m-header">
-                      <span class="avatar" style="background: linear-gradient(135deg, #10a37f 0%, #15803d 100%)">⁕</span>
-                      <span class="model-name">GPT-4o</span>
-                      <span class="m-latency">1.10s ⚡</span>
-                    </div>
-                    <div class="m-body">The capital of India is New Delhi.</div>
-                  </div>
-                  <div class="mockup-card gemini">
-                    <div class="m-header">
-                      <span class="avatar" style="background: linear-gradient(135deg, #4285f4 0%, #7c3aed 100%)">✦</span>
-                      <span class="model-name">Gemini</span>
-                      <span class="m-latency">0.85s ⚡</span>
-                    </div>
-                    <div class="m-body">New Delhi is the official capital city of India.</div>
-                  </div>
-                </div>
-                
-                <div class="mockup-verdict glass">
-                  <div class="verdict-badge-row">
-                    <span class="verdict-label">Jury Verdict</span>
-                    <span class="verdict-confidence">98% High Agreement</span>
-                  </div>
-                  <p class="verdict-text">All selected models agree that New Delhi is the capital of India.</p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div class="login-box">
+        <!-- Logo -->
+        <div class="logo-wrapper">
+          <span class="logo-icon">⚖️</span>
+          <span class="logo-text">OmniAI</span>
         </div>
 
-        <!-- Right Section: Auth Form -->
-        <div class="auth-section">
-          <div class="auth-card glass">
-            <div class="auth-header">
-              <h2 class="auth-title">Welcome Back</h2>
-              <p class="auth-subtitle">Log in to enter the playground</p>
-            </div>
+        <h1 class="login-title">Welcome back</h1>
 
-            <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-              <div *ngIf="errorMessage()" class="alert alert-error">
-                {{ errorMessage() }}
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="email">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  class="input-field"
-                  [(ngModel)]="email"
-                  required
-                  email
-                  placeholder="you@example.com"
-                  #emailInput="ngModel"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="password">Password</label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  class="input-field"
-                  [(ngModel)]="password"
-                  required
-                  minlength="6"
-                  placeholder="••••••••"
-                  #passwordInput="ngModel"
-                />
-              </div>
-
-              <button
-                type="submit"
-                class="btn btn-primary w-full"
-                [disabled]="loginForm.invalid || isLoading()"
-              >
-                <span *ngIf="isLoading()">Logging in...</span>
-                <span *ngIf="!isLoading()">Log In</span>
-              </button>
-            </form>
-
-            <div class="auth-footer">
-              <p>
-                Don't have an account?
-                <a routerLink="/register" class="auth-link">Sign up</a>
-              </p>
-            </div>
+        <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+          <div *ngIf="errorMessage()" class="alert alert-error">
+            {{ errorMessage() }}
           </div>
+
+          <div class="form-group">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="input-field"
+              [(ngModel)]="email"
+              required
+              email
+              placeholder="Email address"
+              #emailInput="ngModel"
+            />
+          </div>
+
+          <div class="form-group">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="input-field"
+              [(ngModel)]="password"
+              required
+              minlength="6"
+              placeholder="Password"
+              #passwordInput="ngModel"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="btn-continue"
+            [disabled]="loginForm.invalid || isLoading()"
+          >
+            <span *ngIf="isLoading()">Loading...</span>
+            <span *ngIf="!isLoading()">Continue</span>
+          </button>
+        </form>
+
+        <div class="signup-prompt">
+          Don't have an account?
+          <a routerLink="/register" class="link-signup">Sign up</a>
+        </div>
+
+        <div class="divider">
+          <span class="divider-line"></span>
+          <span class="divider-text">OR</span>
+          <span class="divider-line"></span>
+        </div>
+
+        <!-- Social Logins (Mocked to match ChatGPT style) -->
+        <div class="social-logins">
+          <button type="button" class="btn-social" (click)="mockSocialLogin('Google')">
+            <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.77c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <button type="button" class="btn-social" (click)="mockSocialLogin('Microsoft')">
+            <svg class="social-icon" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#f35325" d="M0 0h11v11H0z"/>
+              <path fill="#81bc06" d="M12 0h11v11H12z"/>
+              <path fill="#05a6f0" d="M0 12h11v11H0z"/>
+              <path fill="#ffba08" d="M12 12h11v11H12z"/>
+            </svg>
+            <span>Continue with Microsoft Account</span>
+          </button>
+
+          <button type="button" class="btn-social" (click)="mockSocialLogin('Apple')">
+            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-.96.04-2.13.64-2.82 1.45-.6.69-1.12 1.83-.98 2.94.1.08.2.1.32.1 1.04-.03 2.14-.62 2.49-1.43z"/>
+            </svg>
+            <span>Continue with Apple</span>
+          </button>
         </div>
       </div>
     </div>
@@ -157,342 +122,198 @@ import { WorkspaceStateService } from '../../../core/services/workspace-state.se
     .page-wrapper {
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       background-color: var(--bg-primary);
-      position: relative;
-    }
-    
-    .auth-navbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 70px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid var(--border-light);
-    }
-    
-    .nav-container {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    
-    .logo-icon {
-      font-size: 1.5rem;
-    }
-    
-    .logo-text {
-      font-size: 1.25rem;
-      font-weight: 800;
       color: var(--text-primary);
-      letter-spacing: -0.02em;
+      position: relative;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-    
-    .navbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    
-    .nav-btn {
-      padding: 0.5rem 1rem !important;
-      font-size: 0.8125rem !important;
-      text-decoration: none;
-    }
-    
-    .split-layout {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr;
-      margin-top: 70px; /* offset navbar */
-      min-height: calc(100vh - 70px);
-    }
-    
-    @media (min-width: 1024px) {
-      .split-layout {
-        grid-template-columns: 1.1fr 0.9fr;
-      }
-    }
-    
-    /* Hero Section */
-    .hero-section {
+
+    .floating-theme-btn {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: none;
+      border: 1px solid var(--border-light);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 3rem 2rem;
-      border-bottom: 1px solid var(--border-light);
-    }
-    
-    @media (min-width: 1024px) {
-      .hero-section {
-        border-bottom: none;
-        border-right: 1px solid var(--border-light);
-        padding: 4rem;
-      }
-    }
-    
-    .hero-content {
-      max-width: 580px;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-    
-    .version-tag {
-      font-size: 0.6875rem;
-      font-weight: 700;
-      color: var(--primary);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      border: 1px solid var(--primary-glow);
-      background-color: var(--primary-glow);
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      width: fit-content;
-    }
-    
-    .hero-title {
-      font-size: 2.25rem;
-      font-weight: 800;
-      line-height: 1.2;
-      letter-spacing: -0.03em;
+      transition: all 0.2s ease;
       color: var(--text-primary);
+      font-size: 1.125rem;
     }
-    
-    @media (min-width: 640px) {
-      .hero-title {
-        font-size: 2.75rem;
-      }
+    .floating-theme-btn:hover {
+      background-color: var(--bg-secondary);
+      border-color: var(--border-hover);
     }
-    
-    .gradient-text {
-      background: var(--primary-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    .hero-subtitle {
-      font-size: 0.9375rem;
-      line-height: 1.6;
-      color: var(--text-secondary);
-    }
-    
-    /* Mockup Sandbox */
-    .hero-mockup {
-      border-radius: 12px;
-      overflow: hidden;
-      margin-top: 1rem;
-      box-shadow: var(--shadow-glass);
-      border: 1px solid var(--border-light);
-    }
-    
-    .mockup-header {
-      background-color: rgba(0, 0, 0, 0.15);
-      padding: 0.625rem 1rem;
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid var(--border-light);
-    }
-    
-    .window-dots {
-      display: flex;
-      gap: 0.35rem;
-    }
-    
-    .window-dots .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-    
-    .window-dots .dot.red { background-color: #ef4444; }
-    .window-dots .dot.yellow { background-color: #eab308; }
-    .window-dots .dot.green { background-color: #22c55e; }
-    
-    .mockup-title {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-left: 1.5rem;
-      letter-spacing: 0.05em;
-    }
-    
-    .mockup-body {
-      padding: 1.25rem;
+
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+      padding: 2.5rem;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      align-items: center;
+      text-align: center;
     }
-    
-    .mockup-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
-    }
-    
-    @media (min-width: 640px) {
-      .mockup-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    
-    .mockup-card {
-      background-color: rgba(255, 255, 255, 0.01);
-      border: 1px solid var(--border-light);
-      border-radius: 8px;
-      padding: 0.75rem;
-    }
-    
-    .m-header {
+
+    .logo-wrapper {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      margin-bottom: 0.5rem;
+      margin-bottom: 2.5rem;
     }
-    
-    .m-header .avatar {
-      width: 18px;
-      height: 18px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.65rem;
-      color: #fff;
-      font-weight: 700;
+    .logo-icon {
+      font-size: 2.25rem;
     }
-    
-    .m-header .model-name {
-      font-size: 0.75rem;
-      font-weight: 700;
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
       color: var(--text-primary);
     }
-    
-    .m-header .m-latency {
-      margin-left: auto;
-      font-size: 0.625rem;
-      color: var(--primary-hover);
-      font-weight: 600;
+
+    .login-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
     }
-    
-    .m-body {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      line-height: 1.4;
+
+    .login-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
-    
-    .mockup-verdict {
-      padding: 0.75rem;
+
+    .form-group {
+      width: 100%;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 0.875rem 1rem;
       border-radius: 8px;
       border: 1px solid var(--border-light);
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.9375rem;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
     }
-    
-    .verdict-badge-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.6875rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
+    .input-field:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-glow);
     }
-    
-    .verdict-label {
-      color: var(--color-info);
+
+    .btn-continue {
+      width: 100%;
+      padding: 0.875rem;
+      border-radius: 8px;
+      border: none;
+      background-color: var(--primary);
+      color: #ffffff;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      margin-top: 0.5rem;
     }
-    
-    .verdict-confidence {
-      color: var(--color-success);
+    .btn-continue:hover {
+      background-color: var(--primary-hover);
     }
-    
-    .verdict-text {
-      font-size: 0.75rem;
+    .btn-continue:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .signup-prompt {
+      margin-top: 1rem;
+      font-size: 0.875rem;
       color: var(--text-secondary);
-      line-height: 1.4;
     }
-    
-    /* Auth Form Section */
-    .auth-section {
+    .link-signup {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .link-signup:hover {
+      text-decoration: underline;
+    }
+
+    .divider {
+      width: 100%;
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 3rem 2rem;
+      margin: 1.5rem 0;
+      gap: 0.75rem;
     }
-    
-    .auth-card {
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background-color: var(--border-light);
+    }
+    .divider-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .social-logins {
       width: 100%;
-      max-width: 420px;
-      padding: 2.5rem;
-      border-radius: 16px;
-      box-shadow: var(--shadow-glass);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .btn-social {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
       border: 1px solid var(--border-light);
-    }
-    
-    .auth-header {
-      margin-bottom: 2rem;
-      text-align: center;
-    }
-    
-    .auth-title {
-      font-size: 1.625rem;
-      font-weight: 700;
+      background-color: var(--bg-secondary);
       color: var(--text-primary);
-      margin-bottom: 0.35rem;
-      letter-spacing: -0.02em;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.75rem;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
     }
-    
-    .auth-subtitle {
-      font-size: 0.8125rem;
-      color: var(--text-secondary);
+    .btn-social:hover {
+      background-color: var(--bg-tertiary);
+      border-color: var(--border-hover);
     }
-    
+
+    .social-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
     .alert {
       padding: 0.75rem 1rem;
       border-radius: 8px;
       font-size: 0.875rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.5rem;
+      text-align: left;
     }
-    
     .alert-error {
       background-color: rgba(239, 68, 68, 0.08);
       border: 1px solid rgba(239, 68, 68, 0.15);
       color: var(--color-error);
-    }
-    
-    .w-full {
-      width: 100%;
-      margin-top: 1rem;
-    }
-    
-    .auth-footer {
-      margin-top: 2rem;
-      text-align: center;
-      font-size: 0.8125rem;
-      color: var(--text-secondary);
-    }
-    
-    .auth-link {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 600;
-    }
-    
-    .auth-link:hover {
-      color: var(--primary-hover);
-      text-decoration: underline;
     }
   `]
 })
@@ -523,5 +344,9 @@ export class LoginComponent {
         this.errorMessage.set(err.error?.error || 'Failed to login. Please check credentials.');
       }
     });
+  }
+
+  mockSocialLogin(provider: string): void {
+    this.errorMessage.set(`${provider} login is not configured. Please use your email and password to log in.`);
   }
 }
