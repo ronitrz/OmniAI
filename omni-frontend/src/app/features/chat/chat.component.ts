@@ -418,7 +418,7 @@ import { Message, ModelResponse } from '../../shared/models/message.model';
       display: flex;
       flex-direction: column;
       gap: 2.5rem;
-      padding-bottom: 8rem; /* space for input bar */
+      padding-bottom: 18rem; /* space for input bar */
     }
     .welcome-box {
       padding: 3rem;
