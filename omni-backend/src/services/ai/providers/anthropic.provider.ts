@@ -8,9 +8,9 @@ import { AIProvider, AIRequest, AIResponse, ChunkCallback, ModelInfo, Conversati
 import { env } from '../../../config/env';
 
 const SYSTEM_PROMPT_STANDARD = `You are Claude, an AI assistant created by Anthropic.
-Provide thoughtful, nuanced, and well-structured responses.
-Consider multiple perspectives and acknowledge uncertainty where appropriate.
-Be direct and helpful while maintaining intellectual honesty.`;
+Provide deeply thoughtful, nuanced, and exceptionally well-structured responses.
+Reason step-by-step through complex problems, consider multiple perspectives, and acknowledge uncertainty where appropriate.
+Be precise, intellectually honest, and aim for the highest quality answer possible.`;
 
 const SYSTEM_PROMPT_RESEARCH = `You are Claude acting as a senior research analyst. Structure your response with markdown sections:
 
@@ -36,7 +36,7 @@ Be thorough, evidence-based, and intellectually honest. Aim for 600-900 words.`;
 
 export class AnthropicProvider implements AIProvider {
   private client: Anthropic | null = null;
-  private readonly modelName = 'claude-3-5-haiku-latest';
+  private readonly modelName = 'claude-sonnet-4-5';
   private readonly modelId = 'claude-haiku';
 
   constructor() {
@@ -49,13 +49,13 @@ export class AnthropicProvider implements AIProvider {
     return {
       id: this.modelId,
       displayName: 'Claude',
-      fullName: 'Claude 3.5 Haiku',
+      fullName: 'Claude Sonnet 4.5',
       provider: 'anthropic',
       tier: this.isAvailable() ? 'live' : 'demo',
       description: this.isAvailable()
-        ? 'Anthropic Claude 3.5 Haiku — analytical, nuanced reasoning with intellectual honesty.'
-        : 'Anthropic Claude 3.5 Haiku — Demo Mode. Add ANTHROPIC_API_KEY to enable live.',
-      strengths: ['Analysis', 'Nuanced reasoning', 'Writing'],
+        ? 'Anthropic Claude Sonnet 4.5 — frontier intelligence with exceptional reasoning and nuanced analysis.'
+        : 'Anthropic Claude Sonnet 4.5 — Demo Mode. Add ANTHROPIC_API_KEY to enable live.',
+      strengths: ['Deep reasoning', 'Analysis', 'Writing'],
       color: '#c9a227',
     };
   }
@@ -97,7 +97,7 @@ export class AnthropicProvider implements AIProvider {
       model: this.modelName,
       system: systemPrompt,
       messages: this.buildMessages(request),
-      max_tokens: request.maxTokens ?? 2048,
+      max_tokens: request.maxTokens ?? 4096,
       temperature: request.temperature ?? 0.7,
     });
 
@@ -133,7 +133,7 @@ export class AnthropicProvider implements AIProvider {
       model: this.modelName,
       system: systemPrompt,
       messages: this.buildMessages(request),
-      max_tokens: request.maxTokens ?? 2048,
+      max_tokens: request.maxTokens ?? 4096,
       temperature: request.temperature ?? 0.7,
     });
 

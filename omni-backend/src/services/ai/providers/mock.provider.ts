@@ -394,10 +394,10 @@ While my mock database does not have the exact city name indexed, it acts as the
 
   // 5. Factual / Science / History queries
   for (const fact of FACTS) {
-    const hasArmstrong = clean.includes('armstrong') && fact.subject.includes('armstrong');
+    const hasArmstrong = words.includes('armstrong') && fact.subject.includes('armstrong');
     const hasPi = (words.includes('pi') || clean.includes('π')) && fact.subject.includes('pi');
-    const allKeywordsMatch = fact.keywords.every(kw => clean.includes(kw));
-    const anyKeywordsMatch = fact.keywords.filter(kw => clean.includes(kw)).length >= 2;
+    const allKeywordsMatch = fact.keywords.every(kw => words.includes(kw));
+    const anyKeywordsMatch = fact.keywords.filter(kw => words.includes(kw)).length >= 2;
 
     if (hasArmstrong || hasPi || allKeywordsMatch || anyKeywordsMatch) {
       if (modelId === 'gpt-4o') {
@@ -424,7 +424,7 @@ While my mock database does not have the exact city name indexed, it acts as the
   }
 
   // 6. Technology questions
-  const techKey = Object.keys(TECH_INFO).find(k => words.includes(k) || clean.includes(k));
+  const techKey = Object.keys(TECH_INFO).find(k => words.includes(k));
   if (techKey) {
     const tech = TECH_INFO[techKey];
     if (modelId === 'gpt-4o') {
@@ -756,7 +756,7 @@ export class MockProvider implements AIProvider {
     }
 
     // Check if it's a jury synthesis request
-    if (request.prompt.includes('consensusText') && request.prompt.includes('recommendation') && request.prompt.includes('Jury Verdict')) {
+    if (request.prompt.includes('consensusText') && request.prompt.includes('recommendation') && (request.prompt.includes('Jury Verdict') || request.prompt.includes('consensus synthesizer'))) {
       const content = mockJurySynthesis(request.prompt);
       await sleep(500);
       return {

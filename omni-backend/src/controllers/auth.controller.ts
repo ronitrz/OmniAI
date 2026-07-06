@@ -87,3 +87,43 @@ export async function me(req: Request, res: Response, next: NextFunction): Promi
     next(err);
   }
 }
+
+const updateProfileSchema = z.object({
+  fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  profilePicture: z.string().nullable(),
+  profession: z.string().nullable().optional(),
+});
+
+const updatePasswordSchema = z.object({
+  oldPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});
+
+export async function updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { fullName, profilePicture, profession } = updateProfileSchema.parse(req.body);
+    const user = await authService.updateProfile(req.user!.userId, fullName, profilePicture, profession ?? null);
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updatePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { oldPassword, newPassword } = updatePasswordSchema.parse(req.body);
+    await authService.updatePassword(req.user!.userId, oldPassword, newPassword);
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await authService.deleteAccount(req.user!.userId);
+    res.json({ success: true, message: 'Account deleted successfully' });
+  } catch (err) {
+    next(err);
+  }
+}

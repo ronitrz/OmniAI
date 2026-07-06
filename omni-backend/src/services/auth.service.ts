@@ -44,7 +44,7 @@ export async function register(
 
   const user = await prisma.user.create({
     data: { fullName, email, passwordHash, phoneNumber },
-    select: { id: true, email: true, fullName: true, phoneNumber: true, createdAt: true },
+    select: { id: true, email: true, fullName: true, phoneNumber: true, profilePicture: true, createdAt: true },
   });
 
   const token = signToken({ userId: user.id, email: user.email });
@@ -55,8 +55,6 @@ export async function login(email: string, password: string): Promise<AuthResult
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    // Use the same error message for wrong email and wrong password
-    // This prevents user enumeration attacks
     throw new AppError(401, 'Invalid email or password');
   }
 
@@ -73,7 +71,7 @@ export async function login(email: string, password: string): Promise<AuthResult
 export async function getMe(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, fullName: true, phoneNumber: true, createdAt: true },
+    select: { id: true, email: true, fullName: true, phoneNumber: true, profilePicture: true, profession: true, createdAt: true },
   });
 
   if (!user) {
@@ -81,6 +79,40 @@ export async function getMe(userId: string) {
   }
 
   return user;
+}
+
+export async function updateProfile(userId: string, fullName: string, profilePicture: string | null, profession: string | null) {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { fullName, profilePicture, profession },
+    select: { id: true, email: true, fullName: true, phoneNumber: true, profilePicture: true, profession: true, createdAt: true },
+  });
+  return user;
+}
+
+export async function updatePassword(userId: string, oldPassword: string, newPassword: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+
+  const isPasswordValid = await bcrypt.compare(oldPassword, user.passwordHash);
+  if (!isPasswordValid) {
+    throw new AppError(400, 'Incorrect current password');
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash }
+  });
+}
+
+export async function deleteAccount(userId: string) {
+  // Cascades are handled via schema definitions
+  await prisma.user.delete({
+    where: { id: userId }
+  });
 }
 
 function signToken(payload: JwtPayload): string {

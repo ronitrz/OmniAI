@@ -8,13 +8,15 @@ datasource db {
 }
 
 model User {
-  id           String      @id @default(uuid())
-  email        String      @unique
-  passwordHash String      @map("password_hash")
-  fullName     String      @map("full_name")
-  phoneNumber  String?     @unique @map("phone_number")
-  createdAt    DateTime    @default(now()) @map("created_at")
-  workspaces   Workspace[]
+  id             String      @id @default(uuid())
+  email          String      @unique
+  passwordHash   String      @map("password_hash")
+  fullName       String      @map("full_name")
+  phoneNumber    String?     @unique @map("phone_number")
+  profilePicture String?     @map("profile_picture")
+  profession     String?
+  createdAt      DateTime    @default(now()) @map("created_at")
+  workspaces     Workspace[]
 
   @@map("users")
 }

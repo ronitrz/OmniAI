@@ -107,9 +107,16 @@ import { Workspace } from '../../models/workspace.model';
         <!-- Logged In Footer Profile -->
         <ng-container *ngIf="auth.currentUser() as user">
           <!-- Floating Profile Dropdown Menu -->
-          <div class="profile-dropdown animate-fade-in" *ngIf="profileMenuOpen()">
-            <div class="dropdown-header">
-              <span class="avatar-small">{{ user.fullName.slice(0, 2).toUpperCase() }}</span>
+          <div class="profile-dropdown animate-fade-in" *ngIf="profileMenuOpen()">            <div class="dropdown-header">
+              <span 
+                class="avatar-small" 
+                [style.backgroundImage]="getAvatarBackground(user.profilePicture)"
+                [class.has-image]="user.profilePicture && !user.profilePicture.startsWith('linear-gradient')"
+              >
+                <span *ngIf="!user.profilePicture || user.profilePicture.startsWith('linear-gradient')">
+                  {{ user.fullName.slice(0, 2).toUpperCase() }}
+                </span>
+              </span>
               <div class="header-details">
                 <span class="dropdown-user-name">{{ user.fullName }}</span>
                 <span class="dropdown-user-email">{{ user.email }}</span>
@@ -138,19 +145,18 @@ import { Workspace } from '../../models/workspace.model';
             
             <button class="dropdown-item" (click)="showMockSettings(); $event.stopPropagation()" type="button">
               <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
               </svg>
-              <span class="item-text">Settings</span>
+              <span class="item-text">My Profile</span>
             </button>
             
             <button class="dropdown-item" (click)="showMockAnalytics(); $event.stopPropagation()" type="button">
               <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
-                <line x1="18" y1="20" x2="18" y2="10"></line>
-                <line x1="12" y1="20" x2="12" y2="4"></line>
-                <line x1="6" y1="20" x2="6" y2="14"></line>
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              <span class="item-text">Usage Stats</span>
+              <span class="item-text">Chat History</span>
             </button>
             
             <div class="dropdown-divider"></div>
@@ -164,10 +170,17 @@ import { Workspace } from '../../models/workspace.model';
               <span class="item-text">Log Out</span>
             </button>
           </div>
-
-          <!-- Profile Trigger Button -->
+ 
           <button class="profile-trigger-btn" (click)="toggleProfileMenu($event)" type="button">
-            <div class="user-avatar">{{ user.fullName.slice(0, 2).toUpperCase() }}</div>
+            <div 
+              class="user-avatar" 
+              [style.backgroundImage]="getAvatarBackground(user.profilePicture)"
+              [class.has-image]="user.profilePicture && !user.profilePicture.startsWith('linear-gradient')"
+            >
+              <span *ngIf="!user.profilePicture || user.profilePicture.startsWith('linear-gradient')">
+                {{ user.fullName.slice(0, 2).toUpperCase() }}
+              </span>
+            </div>
             <div class="user-details">
               <div class="user-name">{{ user.fullName }}</div>
               <div class="user-email">{{ user.email }}</div>
@@ -556,6 +569,9 @@ import { Workspace } from '../../models/workspace.model';
       font-size: 0.875rem;
       font-weight: 600;
       color: #fff;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
     .user-details {
       flex: 1;
@@ -625,6 +641,9 @@ import { Workspace } from '../../models/workspace.model';
       justify-content: center;
       font-weight: 700;
       font-size: 0.75rem;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
     .header-details {
       display: flex;
@@ -788,12 +807,12 @@ export class SidebarComponent implements OnInit {
   }
 
   showMockSettings(): void {
-    this.state.settingsActiveTab.set('general');
+    this.state.settingsActiveTab.set('profile');
     this.state.settingsModalOpen.set(true);
   }
 
   showMockAnalytics(): void {
-    this.state.settingsActiveTab.set('other');
+    this.state.settingsActiveTab.set('history');
     this.state.settingsModalOpen.set(true);
   }
 
@@ -858,6 +877,19 @@ export class SidebarComponent implements OnInit {
 
   onLogout(): void {
     this.auth.logout();
+  }
+
+  getAvatarBackground(avatar: string | null | undefined): string | null {
+    if (!avatar) return null;
+    if (avatar.startsWith('linear-gradient')) {
+      return avatar;
+    }
+    return `url("${avatar}")`;
+  }
+
+  getAvatarUrl(avatar: string | null | undefined): string | null {
+    if (!avatar || avatar.startsWith('linear-gradient')) return null;
+    return `url("${avatar}")`;
   }
 
   getTotalSessionsCount(): number {

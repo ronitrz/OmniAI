@@ -1,5 +1,5 @@
 // src/app/features/chat/response-card/response-card.component.ts
-import { Component, Input, signal, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
@@ -21,6 +21,23 @@ export interface CardStreamState {
       [class.error-card]="state.status === 'error'"
       [class.complete]="state.status === 'complete'"
     >
+      <!-- Zoom button — absolute top-right of the entire card -->
+      <button
+        class="zoom-btn-corner"
+        *ngIf="allowZoom"
+        (click)="onZoomIn()"
+        title="Pop out in floating overlay"
+        type="button"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <polyline points="9 21 3 21 3 15"></polyline>
+          <line x1="21" y1="3" x2="14" y2="10"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+        <span class="zoom-label">Pop out</span>
+      </button>
+
       <!-- Card Header -->
       <div class="card-header">
         <div class="model-info">
@@ -74,7 +91,7 @@ export interface CardStreamState {
             [title]="copied() ? 'Copied!' : 'Copy response'"
             type="button"
           >
-            <svg *ngIf="!copied()" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <svg *ngIf="!copied()" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path></svg>
             <svg *ngIf="copied()" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-success"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </button>
         </div>
@@ -335,6 +352,43 @@ export interface CardStreamState {
       border-color: var(--border-hover);
       color: var(--text-primary);
     }
+    /* Zoom corner button — absolute top-right of the card */
+    .zoom-btn-corner {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.55rem 0.25rem 0.45rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+      background: rgba(10, 12, 26, 0.55);
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      font-weight: 600;
+      font-family: inherit;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(-2px);
+      transition: opacity 0.18s ease, transform 0.18s ease,
+                  background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+      z-index: 10;
+    }
+    /* Show on card hover */
+    .response-card:hover .zoom-btn-corner {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .zoom-btn-corner:hover {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: rgba(99, 102, 241, 0.45);
+      color: var(--primary-hover);
+    }
+    .zoom-label {
+      line-height: 1;
+    }
     .text-success {
       color: var(--color-success) !important;
     }
@@ -493,6 +547,13 @@ export class ResponseCardComponent implements OnChanges {
   @Input() tier: 'live' | 'demo' = 'demo';
   @Input() state: CardStreamState = { status: 'idle', content: '' };
   @Input() sharedPhrases: string[] = [];
+  @Input() allowZoom: boolean = false;
+
+  @Output() zoomIn = new EventEmitter<void>();
+
+  onZoomIn(): void {
+    this.zoomIn.emit();
+  }
 
   copied = signal(false);
   highlightedHtml: string | null = null;

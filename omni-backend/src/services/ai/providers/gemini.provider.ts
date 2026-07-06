@@ -7,9 +7,10 @@ import { GoogleGenerativeAI, Content } from '@google/generative-ai';
 import { AIProvider, AIRequest, AIResponse, ChunkCallback, ModelInfo } from '../interfaces/ai-provider.interface';
 import { env } from '../../../config/env';
 
-const SYSTEM_PROMPT_STANDARD = `You are a knowledgeable and helpful AI assistant. 
-Provide clear, accurate, and well-structured responses. 
-Be direct and informative without unnecessary padding.`;
+const SYSTEM_PROMPT_STANDARD = `You are Gemini, a highly capable AI assistant by Google.
+Provide clear, accurate, and well-structured responses.
+Think through problems carefully, draw on broad knowledge, and deliver insightful, direct answers.
+Be thorough but concise, and use examples where helpful.`;
 
 const SYSTEM_PROMPT_RESEARCH = `You are a senior research analyst conducting a professional analysis. 
 Structure your response with the following sections using markdown headers:
@@ -36,7 +37,7 @@ Be thorough and evidence-based. Aim for 600-900 words total.`;
 
 export class GeminiProvider implements AIProvider {
   private client: GoogleGenerativeAI | null = null;
-  private readonly modelName = 'gemini-2.0-flash';
+  private readonly modelName = 'gemini-2.5-flash';
   private readonly modelId = 'gemini-flash';
 
   constructor() {
@@ -49,13 +50,13 @@ export class GeminiProvider implements AIProvider {
     return {
       id: this.modelId,
       displayName: 'Gemini',
-      fullName: 'Gemini 2.0 Flash',
+      fullName: 'Gemini 2.5 Flash',
       provider: 'google',
       tier: this.isAvailable() ? 'live' : 'demo',
       description: this.isAvailable()
-        ? 'Google Gemini 2.0 Flash — fast, capable, 1M token context window.'
-        : 'Google Gemini 2.0 Flash — Demo Mode. Add GEMINI_API_KEY to enable live.',
-      strengths: ['Speed', 'Long context', 'Multimodal'],
+        ? 'Google Gemini 2.5 Flash — most intelligent Gemini model with built-in thinking and 1M token context.'
+        : 'Google Gemini 2.5 Flash — Demo Mode. Add GEMINI_API_KEY to enable live.',
+      strengths: ['Reasoning', 'Long context', 'Multimodal'],
       color: '#4285F4',
     };
   }

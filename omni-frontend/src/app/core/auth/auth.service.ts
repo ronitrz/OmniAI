@@ -9,6 +9,8 @@ export interface User {
   email: string;
   fullName: string;
   phoneNumber?: string | null;
+  profilePicture?: string | null;
+  profession?: string | null;
   createdAt: string;
 }
 
@@ -62,11 +64,27 @@ export class AuthService {
     );
   }
 
+  updateProfile(fullName: string, profilePicture: string | null, profession: string | null = null): Observable<{ user: User }> {
+    return this.api.put<{ user: User }>('/auth/profile', { fullName, profilePicture, profession }).pipe(
+      tap((res: { user: User }) => this.currentUser.set(res.user))
+    );
+  }
+
+  updatePassword(oldPassword: string, newPassword: string): Observable<{ success: boolean; message: string }> {
+    return this.api.put<{ success: boolean; message: string }>('/auth/password', { oldPassword, newPassword });
+  }
+
+  deleteAccount(): Observable<{ success: boolean; message: string }> {
+    return this.api.delete<{ success: boolean; message: string }>('/auth/account').pipe(
+      tap(() => this.logout())
+    );
+  }
+
   logout(): void {
     localStorage.removeItem('omni_token');
     this.token.set(null);
     this.currentUser.set(null);
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 
   private handleAuthSuccess(res: AuthResponse): void {

@@ -8,7 +8,8 @@ import { env } from '../../../config/env';
 
 const SYSTEM_PROMPT_STANDARD = `You are GPT-4o, a highly capable AI assistant created by OpenAI.
 Provide clear, practical, and well-structured responses.
-Use concrete examples and actionable recommendations when appropriate.`;
+Use concrete examples, step-by-step reasoning, and actionable recommendations.
+Be thorough and precise, especially on technical and nuanced topics.`;
 
 const SYSTEM_PROMPT_RESEARCH = `You are GPT-4o acting as a research analyst. Use markdown sections:
 
@@ -34,7 +35,7 @@ Aim for 600-900 words.`;
 
 export class OpenAIProvider implements AIProvider {
   private client: OpenAI | null = null;
-  private readonly modelName = 'gpt-4o-mini';
+  private readonly modelName = 'gpt-4o';
   private readonly modelId = 'gpt-4o';
 
   constructor() {
@@ -47,13 +48,13 @@ export class OpenAIProvider implements AIProvider {
     return {
       id: this.modelId,
       displayName: 'GPT-4o',
-      fullName: 'GPT-4o Mini',
+      fullName: 'GPT-4o',
       provider: 'openai',
       tier: this.isAvailable() ? 'live' : 'demo',
       description: this.isAvailable()
-        ? 'OpenAI GPT-4o Mini — fast, practical, excellent at instruction following.'
-        : 'OpenAI GPT-4o Mini — Demo Mode. Add OPENAI_API_KEY to enable live.',
-      strengths: ['Code', 'Instruction following', 'Tool use'],
+        ? 'OpenAI GPT-4o — frontier model with advanced reasoning, coding, and instruction following.'
+        : 'OpenAI GPT-4o — Demo Mode. Add OPENAI_API_KEY to enable live.',
+      strengths: ['Reasoning', 'Code', 'Instruction following'],
       color: '#10a37f',
     };
   }

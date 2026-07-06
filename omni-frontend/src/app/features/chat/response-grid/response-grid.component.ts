@@ -1,5 +1,5 @@
 // src/app/features/chat/response-grid/response-grid.component.ts
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ResponseCardComponent, CardStreamState } from '../response-card/response-card.component';
 import { ModelInfo } from '../model-selector/model-selector.component';
@@ -18,6 +18,8 @@ import { ModelInfo } from '../model-selector/model-selector.component';
           [tier]="model.tier"
           [state]="streamStates[model.id] || getIdleState()"
           [sharedPhrases]="sharedPhrases"
+          [allowZoom]="allowZoom"
+          (zoomIn)="onZoomIn(model)"
         ></app-response-card>
       </div>
     </div>
@@ -50,6 +52,13 @@ export class ResponseGridComponent {
   @Input() selectedModels: ModelInfo[] = [];
   @Input() streamStates: Record<string, CardStreamState> = {};
   @Input() sharedPhrases: string[] = [];
+  @Input() allowZoom: boolean = false;
+
+  @Output() zoomModel = new EventEmitter<{ model: ModelInfo; state: CardStreamState }>();
+
+  onZoomIn(model: ModelInfo): void {
+    this.zoomModel.emit({ model, state: this.streamStates[model.id] || this.getIdleState() });
+  }
 
   get gridClass(): string {
     return 'cols-1';

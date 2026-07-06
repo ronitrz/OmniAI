@@ -7,9 +7,10 @@ import OpenAI from 'openai';
 import { AIProvider, AIRequest, AIResponse, ChunkCallback, ModelInfo, ConversationTurn } from '../interfaces/ai-provider.interface';
 import { env } from '../../../config/env';
 
-const SYSTEM_PROMPT_STANDARD = `You are a knowledgeable AI assistant with strong analytical and coding capabilities.
-Provide clear, accurate responses with practical insights. 
-Focus on concrete details and actionable information.`;
+const SYSTEM_PROMPT_STANDARD = `You are a highly intelligent AI assistant with exceptional analytical and reasoning capabilities.
+Think through problems step-by-step with rigorous logic.
+Provide accurate, well-structured responses with depth and precision.
+Focus on concrete details, actionable insights, and comprehensive coverage of the topic.`;
 
 const SYSTEM_PROMPT_RESEARCH = `You are a senior research analyst. Structure your response with markdown sections:
 
@@ -35,7 +36,7 @@ Aim for 600-900 words. Be thorough and analytical.`;
 
 export class DeepSeekProvider implements AIProvider {
   private client: OpenAI | null = null;
-  private readonly modelName = 'deepseek-chat'; // Maps to DeepSeek-V3
+  private readonly modelName = 'deepseek-reasoner'; // Maps to DeepSeek-R1 (reasoning model)
   private readonly modelId = 'deepseek-chat';
 
   constructor() {
@@ -51,13 +52,13 @@ export class DeepSeekProvider implements AIProvider {
     return {
       id: this.modelId,
       displayName: 'DeepSeek',
-      fullName: 'DeepSeek V3',
+      fullName: 'DeepSeek R1',
       provider: 'deepseek',
       tier: this.isAvailable() ? 'live' : 'demo',
       description: this.isAvailable()
-        ? 'DeepSeek V3 — excellent reasoning and code generation at very low cost.'
-        : 'DeepSeek V3 — Demo Mode. Add DEEPSEEK_API_KEY to enable live.',
-      strengths: ['Reasoning', 'Code', 'Analysis'],
+        ? 'DeepSeek R1 — frontier reasoning model with chain-of-thought thinking, rivaling o1-class intelligence.'
+        : 'DeepSeek R1 — Demo Mode. Add DEEPSEEK_API_KEY to enable live.',
+      strengths: ['Chain-of-thought reasoning', 'Math & Code', 'Analysis'],
       color: '#0ea5e9',
     };
   }
@@ -69,13 +70,12 @@ export class DeepSeekProvider implements AIProvider {
   private buildMessages(
     request: AIRequest
   ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
-    const systemPrompt = request.mode === 'research'
+    // deepseek-reasoner does not support system role — prepend context to first user message
+    const systemContext = request.mode === 'research'
       ? SYSTEM_PROMPT_RESEARCH
       : (request.systemPrompt ?? SYSTEM_PROMPT_STANDARD);
 
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: 'system', content: systemPrompt },
-    ];
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
     // Add conversation history
     (request.history ?? []).forEach((turn: ConversationTurn) => {
@@ -85,8 +85,12 @@ export class DeepSeekProvider implements AIProvider {
       });
     });
 
-    // Add current prompt
-    messages.push({ role: 'user', content: request.prompt });
+    // Prepend system context into the user's current message
+    const userContent = messages.length === 0
+      ? `${systemContext}\n\nUser: ${request.prompt}`
+      : request.prompt;
+
+    messages.push({ role: 'user', content: userContent });
 
     return messages;
   }
@@ -101,11 +105,12 @@ export class DeepSeekProvider implements AIProvider {
       model: this.modelName,
       messages: this.buildMessages(request),
       stream: true,
-      max_tokens: request.maxTokens ?? 2048,
-      temperature: request.temperature ?? 0.7,
+      max_tokens: request.maxTokens ?? 8000,
+      temperature: 0, // DeepSeek R1 requires temperature=0 for deterministic chain-of-thought
     });
 
     for await (const chunk of stream) {
+      // Skip reasoning_content tokens — only emit the final answer content
       const text = chunk.choices[0]?.delta?.content ?? '';
       if (text) {
         fullContent += text;
@@ -131,9 +136,9 @@ export class DeepSeekProvider implements AIProvider {
       model: this.modelName,
       messages: this.buildMessages(request),
       stream: false,
-      max_tokens: request.maxTokens ?? 2048,
-      temperature: request.temperature ?? 0.7,
-      response_format: request.jsonMode ? { type: 'json_object' } : undefined,
+      max_tokens: request.maxTokens ?? 8000,
+      temperature: 0, // DeepSeek R1 requires temperature=0
+      // Note: deepseek-reasoner does not support response_format / json_mode
     });
 
     const content = response.choices[0]?.message?.content ?? '';

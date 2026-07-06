@@ -105,6 +105,10 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
           <!-- Contradictions Tab -->
           <div *ngIf="activeTab() === 'contradictions'">
+            <div class="tab-explanation animate-fade-in">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="explanation-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span>Discrepancies found where models asserted conflicting facts or positions.</span>
+            </div>
             <div class="contradictions-list" *ngIf="verdict.contradictions.length > 0; else noContradictions">
               <div *ngFor="let item of verdict.contradictions" class="contradiction-item">
                 <h4 class="contradiction-topic">{{ item.topic }}</h4>
@@ -127,6 +131,10 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
           <!-- Unique Insights Tab -->
           <div *ngIf="activeTab() === 'insights'">
+            <div class="tab-explanation animate-fade-in">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="explanation-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span>Specialized facts, unique context, or domain details mentioned by exactly one model that others did not raise.</span>
+            </div>
             <ul class="analysis-list" *ngIf="verdict.uniqueInsights.length > 0; else noInsights">
               <li *ngFor="let item of verdict.uniqueInsights" class="analysis-item">
                 <span 
@@ -582,6 +590,27 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
       padding: 0.1rem 0.3rem;
       border-radius: 4px;
       font-size: 0.8125rem;
+    }
+
+    .tab-explanation {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.75rem 1rem;
+      background-color: var(--primary-glow);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.45;
+    }
+    
+    .explanation-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--primary-hover);
+      flex-shrink: 0;
     }
   `]
 
