@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { ModelInfo } from '../model-selector/model-selector.component';
 import { CardStreamState } from '../response-card/response-card.component';
+import { JuryVerdict } from '../../../shared/models/verdict.model';
 
 interface ReportSections {
   executiveSummary: string;
@@ -22,13 +23,29 @@ interface ReportSections {
     <div class="research-report-container glass animate-fade-in">
       <div class="report-header">
         <div class="title-area">
-          <span class="report-icon">📄</span>
-          <h2 class="report-title">Research Intelligence Brief</h2>
+          <span class="report-icon">🧠</span>
+          <div class="title-text-group">
+            <h2 class="report-title">Research Intelligence Brief</h2>
+            <span class="report-subtitle">Synthesized Multi-Model Analysis</span>
+          </div>
         </div>
         <div class="models-row">
-          <span class="meta-label">Compiled by:</span>
+          <span class="meta-label">View Mode:</span>
           <div class="models-list">
-            <span 
+            <!-- Master Consensus Tab (Unified Mix of All Models) -->
+            <button 
+              type="button"
+              class="model-chip master-chip"
+              [class.active]="activeModelId() === 'master-consensus'"
+              (click)="activeModelId.set('master-consensus')"
+            >
+              <span class="chip-avatar master-avatar">✨</span>
+              <span class="chip-name">Master Consensus (Unified Mix)</span>
+            </button>
+
+            <!-- Individual Model Tabs -->
+            <button 
+              type="button"
               *ngFor="let model of selectedModels" 
               class="model-chip"
               [class.active]="activeModelId() === model.id"
@@ -56,97 +73,232 @@ interface ReportSections {
                 </svg>
               </span>
               <span class="chip-name">{{ model.displayName }}</span>
-            </span>
+            </button>
           </div>
         </div>
       </div>
 
       <!-- Report View Body -->
       <div class="report-body">
-        <div *ngIf="getActiveState() as state; else noState">
-          <!-- Loading state -->
-          <div class="skeleton-wrapper" *ngIf="state.status === 'idle' || (state.status === 'streaming' && !state.content)">
-            <div class="shimmer skeleton-line h-2rem"></div>
-            <div class="shimmer skeleton-line w-4-5"></div>
-            <div class="shimmer skeleton-line"></div>
-            <div class="shimmer skeleton-line w-2-3"></div>
-            <div class="shimmer skeleton-line"></div>
-          </div>
-
-          <!-- Document Render -->
-          <div class="report-document-sections" *ngIf="state.content">
-            <ng-container *ngIf="getSections(state.content) as report">
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- VIEW MODE 1: MASTER CONSENSUS BRIEF (UNIFIED MIX OF ALL)       -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div *ngIf="activeModelId() === 'master-consensus'" class="master-consensus-view animate-fade-in">
+          
+          <!-- Master Synthesis Available -->
+          <div *ngIf="verdict; else masterPendingOrFallback" class="report-structured-layout">
+            
+            <!-- Alert Badge Bar -->
+            <div class="master-banner glass">
+              <div class="banner-badge">
+                <span class="sparkle-icon">✨</span>
+                <span>Synthesized AI Intelligence Brief</span>
+                <span class="confidence-pill" [class.high]="verdict.confidenceLabel === 'HIGH'" [class.medium]="verdict.confidenceLabel === 'MEDIUM'">
+                  {{ getConfidencePercentage(verdict.confidenceScore) }}% {{ verdict.confidenceLabel }} CONSENSUS
+                </span>
+              </div>
+              <p class="banner-sub">Combined research findings synthesized from {{ selectedModels.length }} models.</p>
               
-              <!-- If we have parsed headers, show structured cards -->
-              <div class="report-structured-layout" *ngIf="report.hasSections; else fallbackRaw">
-                
-                <!-- Executive Summary -->
-                <div class="report-section-card glass" *ngIf="report.executiveSummary">
-                  <div class="r-section-header">
-                    <span class="r-section-icon">📋</span>
-                    <h3 class="r-section-title">Executive Summary</h3>
-                  </div>
-                  <div class="r-section-content" [innerHTML]="report.executiveSummary | markdown"></div>
+              <!-- Participating Models Badges -->
+              <div class="participating-models-row mt-2">
+                <span *ngFor="let m of selectedModels" class="participating-badge">
+                  <span class="dot-indicator" [style.background]="m.color"></span>
+                  {{ m.displayName }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Master Executive Summary -->
+            <div class="report-section-card glass master-card">
+              <div class="r-section-header">
+                <span class="r-section-icon">📋</span>
+                <h3 class="r-section-title">Master Executive Synthesis</h3>
+              </div>
+              <div class="r-section-content" [innerHTML]="verdict.consensusText | markdown"></div>
+            </div>
+
+            <!-- Synthesized Agreements & Universal Facts -->
+            <div class="report-section-card glass" *ngIf="verdict.agreements && verdict.agreements.length > 0">
+              <div class="r-section-header">
+                <span class="r-section-icon">🤝</span>
+                <h3 class="r-section-title">Key Synthesized Findings & Universal Facts</h3>
+              </div>
+              <ul class="agreement-bullet-list">
+                <li *ngFor="let item of verdict.agreements" class="agreement-item">
+                  <span class="check-icon">✓</span>
+                  <span>{{ item }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Discrepancies & Contradictions Grid -->
+            <div class="report-grid-panel" *ngIf="verdict.contradictions && verdict.contradictions.length > 0">
+              <div class="report-section-card glass" *ngFor="let c of verdict.contradictions">
+                <div class="r-section-header text-rose">
+                  <span class="r-section-icon">⚡</span>
+                  <h3 class="r-section-title">Nuance: {{ c.topic }}</h3>
                 </div>
-
-                <!-- Key Findings -->
-                <div class="report-section-card glass" *ngIf="report.keyFindings">
-                  <div class="r-section-header">
-                    <span class="r-section-icon">🔑</span>
-                    <h3 class="r-section-title">Key Findings</h3>
+                <div class="contradiction-positions">
+                  <div *ngFor="let entry of getPositionsList(c.positions)" class="position-chip-box">
+                    <span class="pos-model-name">{{ getModelNameById(entry.modelId) }}:</span>
+                    <span class="pos-text">{{ entry.position }}</span>
                   </div>
-                  <div class="r-section-content" [innerHTML]="report.keyFindings | markdown"></div>
-                </div>
-
-                <!-- Agreements & Contradictions Grid -->
-                <div class="report-grid-panel" *ngIf="report.agreements || report.contradictions">
-                  <div class="report-section-card glass" *ngIf="report.agreements">
-                    <div class="r-section-header">
-                      <span class="r-section-icon">🤝</span>
-                      <h3 class="r-section-title">Agreements</h3>
-                    </div>
-                    <div class="r-section-content" [innerHTML]="report.agreements | markdown"></div>
-                  </div>
-
-                  <div class="report-section-card glass" *ngIf="report.contradictions">
-                    <div class="r-section-header text-rose">
-                      <span class="r-section-icon">⚡</span>
-                      <h3 class="r-section-title">Contradictions</h3>
-                    </div>
-                    <div class="r-section-content" [innerHTML]="report.contradictions | markdown"></div>
-                  </div>
-                </div>
-
-                <!-- Conclusion -->
-                <div class="report-section-card glass conclusion-card" *ngIf="report.conclusion">
-                  <div class="r-section-header">
-                    <span class="r-section-icon">🎯</span>
-                    <h3 class="r-section-title">Conclusion</h3>
-                  </div>
-                  <div class="r-section-content" [innerHTML]="report.conclusion | markdown"></div>
                 </div>
               </div>
+            </div>
 
-              <!-- Fallback layout when there are no section headings -->
-              <ng-template #fallbackRaw>
-                <div class="report-document" [innerHTML]="state.content | markdown"></div>
-              </ng-template>
+            <!-- Unique Model Takeaways -->
+            <div class="report-section-card glass" *ngIf="verdict.uniqueInsights && verdict.uniqueInsights.length > 0">
+              <div class="r-section-header">
+                <span class="r-section-icon">💡</span>
+                <h3 class="r-section-title">Unique Model Insights</h3>
+              </div>
+              <div class="unique-insights-grid">
+                <div *ngFor="let insight of verdict.uniqueInsights" class="unique-insight-item">
+                  <span class="insight-model-badge" [style.background]="getAvatarGradient(insight.modelId)">
+                    {{ getModelNameById(insight.modelId) }}
+                  </span>
+                  <p class="insight-body">{{ insight.insight }}</p>
+                </div>
+              </div>
+            </div>
 
-            </ng-container>
+            <!-- Actionable Strategic Recommendation -->
+            <div class="report-section-card glass conclusion-card" *ngIf="verdict.recommendation">
+              <div class="r-section-header">
+                <span class="r-section-icon">🎯</span>
+                <h3 class="r-section-title">Strategic Actionable Conclusion</h3>
+              </div>
+              <div class="r-section-content" [innerHTML]="verdict.recommendation | markdown"></div>
+            </div>
+
           </div>
 
-          <!-- Error Render -->
-          <div class="error-wrapper" *ngIf="state.status === 'error'">
-            <span class="error-icon">⚠</span>
-            <div class="error-content">
-              <span class="error-title">Analysis Failed</span>
-              <p class="error-text">{{ state.error || 'This provider encountered an error during research.' }}</p>
+          <!-- Pending Deliberation or Fallback Master Synthesis -->
+          <ng-template #masterPendingOrFallback>
+            <div *ngIf="isDeliberating" class="master-deliberation-card glass animate-fade-in">
+              <div class="deliberation-pulse">🧠</div>
+              <h3>Synthesizing Multi-Model Master Consensus...</h3>
+              <p>Merging facts, cross-verifying claims, and generating the unified research brief...</p>
+              <div class="loader-progress-container mt-3">
+                <div class="loader-progress-bar"></div>
+              </div>
+            </div>
+
+            <!-- If not deliberating, synthesize live from available completed models -->
+            <div *ngIf="!isDeliberating" class="report-structured-layout">
+              <div class="master-banner glass">
+                <div class="banner-badge">
+                  <span class="sparkle-icon">✨</span>
+                  <span>Unified Multi-Model Research Brief</span>
+                </div>
+                <p class="banner-sub">Synthesized across all participating models.</p>
+              </div>
+
+              <div class="report-section-card glass master-card">
+                <div class="r-section-header">
+                  <span class="r-section-icon">📋</span>
+                  <h3 class="r-section-title">Synthesized Multi-Model Brief</h3>
+                </div>
+                <div class="r-section-content" [innerHTML]="getCombinedMasterContent() | markdown"></div>
+              </div>
+            </div>
+          </ng-template>
+
+        </div>
+
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- VIEW MODE 2: INDIVIDUAL MODEL RESEARCH BREAKDOWN                -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div *ngIf="activeModelId() !== 'master-consensus'">
+          <div *ngIf="getActiveState() as state; else noState">
+            <!-- Loading state -->
+            <div class="skeleton-wrapper" *ngIf="state.status === 'idle' || (state.status === 'streaming' && !state.content)">
+              <div class="shimmer skeleton-line h-2rem"></div>
+              <div class="shimmer skeleton-line w-4-5"></div>
+              <div class="shimmer skeleton-line"></div>
+              <div class="shimmer skeleton-line w-2-3"></div>
+              <div class="shimmer skeleton-line"></div>
+            </div>
+
+            <!-- Document Render -->
+            <div class="report-document-sections" *ngIf="state.content">
+              <ng-container *ngIf="getSections(state.content) as report">
+                
+                <!-- If we have parsed headers, show structured cards -->
+                <div class="report-structured-layout" *ngIf="report.hasSections; else fallbackRaw">
+                  
+                  <!-- Executive Summary -->
+                  <div class="report-section-card glass" *ngIf="report.executiveSummary">
+                    <div class="r-section-header">
+                      <span class="r-section-icon">📋</span>
+                      <h3 class="r-section-title">Executive Summary</h3>
+                    </div>
+                    <div class="r-section-content" [innerHTML]="report.executiveSummary | markdown"></div>
+                  </div>
+
+                  <!-- Key Findings -->
+                  <div class="report-section-card glass" *ngIf="report.keyFindings">
+                    <div class="r-section-header">
+                      <span class="r-section-icon">🔑</span>
+                      <h3 class="r-section-title">Key Findings</h3>
+                    </div>
+                    <div class="r-section-content" [innerHTML]="report.keyFindings | markdown"></div>
+                  </div>
+
+                  <!-- Agreements & Contradictions Grid -->
+                  <div class="report-grid-panel" *ngIf="report.agreements || report.contradictions">
+                    <div class="report-section-card glass" *ngIf="report.agreements">
+                      <div class="r-section-header">
+                        <span class="r-section-icon">🤝</span>
+                        <h3 class="r-section-title">Agreements & Facts</h3>
+                      </div>
+                      <div class="r-section-content" [innerHTML]="report.agreements | markdown"></div>
+                    </div>
+
+                    <div class="report-section-card glass" *ngIf="report.contradictions">
+                      <div class="r-section-header text-rose">
+                        <span class="r-section-icon">⚡</span>
+                        <h3 class="r-section-title">Contradictions & Risks</h3>
+                      </div>
+                      <div class="r-section-content" [innerHTML]="report.contradictions | markdown"></div>
+                    </div>
+                  </div>
+
+                  <!-- Conclusion -->
+                  <div class="report-section-card glass conclusion-card" *ngIf="report.conclusion">
+                    <div class="r-section-header">
+                      <span class="r-section-icon">🎯</span>
+                      <h3 class="r-section-title">Strategic Conclusion</h3>
+                    </div>
+                    <div class="r-section-content" [innerHTML]="report.conclusion | markdown"></div>
+                  </div>
+                </div>
+
+                <!-- Fallback layout when there are no section headings -->
+                <ng-template #fallbackRaw>
+                  <div class="report-document" [innerHTML]="state.content | markdown"></div>
+                </ng-template>
+
+              </ng-container>
+            </div>
+
+            <!-- Error Render -->
+            <div class="error-wrapper" *ngIf="state.status === 'error'">
+              <span class="error-icon">⚠</span>
+              <div class="error-content">
+                <span class="error-title">Analysis Failed</span>
+                <p class="error-text">{{ state.error || 'This provider encountered an error during research.' }}</p>
+              </div>
             </div>
           </div>
+          <ng-template #noState>
+            <p class="empty-report-text">Select a model above to view its structured analysis report.</p>
+          </ng-template>
         </div>
-        <ng-template #noState>
-          <p class="empty-report-text">Select a model above to view its structured analysis report.</p>
-        </ng-template>
+
       </div>
     </div>
   `,
@@ -180,11 +332,22 @@ interface ReportSections {
       0% { transform: translateY(-2px); }
       100% { transform: translateY(2px); }
     }
+    .title-text-group {
+      display: flex;
+      flex-direction: column;
+    }
     .report-title {
       font-size: 1.375rem;
       font-weight: 800;
       color: var(--text-primary);
       letter-spacing: -0.02em;
+    }
+    .report-subtitle {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--primary-hover);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
     .models-row {
       display: flex;
@@ -208,7 +371,7 @@ interface ReportSections {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.35rem 0.875rem 0.35rem 0.5rem;
+      padding: 0.4rem 0.875rem 0.4rem 0.6rem;
       border-radius: 9999px;
       background-color: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-light);
@@ -217,6 +380,7 @@ interface ReportSections {
       font-weight: 600;
       color: var(--text-muted);
       transition: all 0.25s ease;
+      font-family: inherit;
     }
     .model-chip:hover {
       color: var(--text-primary);
@@ -227,7 +391,18 @@ interface ReportSections {
       color: #ffffff;
       background-color: var(--primary-glow);
       border-color: var(--primary);
-      box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.18);
+    }
+    .master-chip {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.12) 100%);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: var(--text-primary);
+    }
+    .master-chip.active {
+      background: var(--primary-gradient);
+      border-color: transparent;
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
     }
     .chip-avatar {
       width: 20px;
@@ -239,6 +414,10 @@ interface ReportSections {
       font-size: 0.6rem;
       font-weight: 700;
       color: #fff;
+    }
+    .master-avatar {
+      background: none;
+      font-size: 0.8rem;
     }
     
     .model-logo-svg-mini {
@@ -252,6 +431,153 @@ interface ReportSections {
       padding: 2.5rem;
       background-color: rgba(0, 0, 0, 0.08);
       min-height: 300px;
+    }
+    
+    /* Master Banner */
+    .master-banner {
+      padding: 1.25rem 1.5rem;
+      border-radius: 14px;
+      border: 1px solid var(--border-light);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(168, 85, 247, 0.03) 100%);
+    }
+    .banner-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9375rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .confidence-pill {
+      font-size: 0.65rem;
+      font-weight: 750;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      background-color: rgba(16, 185, 129, 0.15);
+      color: var(--color-live);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      letter-spacing: 0.05em;
+    }
+    .confidence-pill.medium {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: var(--color-demo);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+    .banner-sub {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      margin-bottom: 0;
+    }
+    .participating-models-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .participating-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background-color: rgba(0, 0, 0, 0.2);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+    }
+    .dot-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    
+    .master-card {
+      border-left: 4px solid var(--primary);
+    }
+
+    .agreement-bullet-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .agreement-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .check-icon {
+      color: var(--color-success);
+      font-weight: 800;
+      font-size: 0.875rem;
+      margin-top: 0.1rem;
+    }
+    .position-chip-box {
+      background-color: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-light);
+      padding: 0.65rem 0.875rem;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      font-size: 0.8125rem;
+    }
+    .pos-model-name {
+      font-weight: 750;
+      color: var(--text-primary);
+      margin-right: 0.5rem;
+    }
+    .pos-text {
+      color: var(--text-muted);
+    }
+    .unique-insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .unique-insight-item {
+      background-color: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-light);
+      padding: 1rem;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .insight-model-badge {
+      font-size: 0.6875rem;
+      font-weight: 750;
+      color: #fff;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      align-self: flex-start;
+    }
+    .insight-body {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .master-deliberation-card {
+      padding: 3rem;
+      border-radius: 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      max-width: 600px;
+      margin: 2rem auto;
+    }
+    .deliberation-pulse {
+      font-size: 3rem;
+      animation: pulse-op 1.5s infinite alternate;
     }
     
     /* Structured brief styles */
@@ -413,23 +739,56 @@ interface ReportSections {
 export class ResearchReportComponent implements OnChanges {
   @Input() selectedModels: ModelInfo[] = [];
   @Input() streamStates: Record<string, CardStreamState> = {};
+  @Input() verdict: JuryVerdict | null = null;
+  @Input() isDeliberating: boolean = false;
 
-  activeModelId = signal<string | null>(null);
+  activeModelId = signal<string>('master-consensus');
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['selectedModels'] && this.selectedModels.length > 0) {
-      const currentActive = this.activeModelId();
-      const stillSelected = this.selectedModels.some(m => m.id === currentActive);
-      if (!stillSelected) {
-        this.activeModelId.set(this.selectedModels[0].id);
-      }
-    }
+    // Keep 'master-consensus' as default
   }
 
   getActiveState(): CardStreamState | null {
     const id = this.activeModelId();
-    if (!id) return null;
+    if (!id || id === 'master-consensus') return null;
     return this.streamStates[id] || { status: 'idle', content: '' };
+  }
+
+  getModelNameById(modelId: string): string {
+    const found = this.selectedModels.find(m => m.id === modelId);
+    if (found) return found.displayName;
+    if (modelId === 'gpt-4o') return 'GPT-5.4';
+    if (modelId === 'gemini-flash') return 'Gemini';
+    if (modelId === 'claude-haiku') return 'Claude';
+    if (modelId === 'deepseek-chat') return 'DeepSeek';
+    return modelId;
+  }
+
+  getConfidencePercentage(score: number): number {
+    if (score === undefined || score === null) return 100;
+    return score <= 1 ? Math.round(score * 100) : Math.round(score);
+  }
+
+  getPositionsList(positions: Record<string, string>): { modelId: string; position: string }[] {
+    if (!positions) return [];
+    return Object.keys(positions).map(key => ({
+      modelId: key,
+      position: positions[key]
+    }));
+  }
+
+  getCombinedMasterContent(): string {
+    // Generate a fallback master synthesis from available completed model stream states
+    const modelIds = Object.keys(this.streamStates);
+    let combined = '';
+    modelIds.forEach(modelId => {
+      const state = this.streamStates[modelId];
+      if (state && state.content && state.content.trim().length > 0) {
+        const modelName = this.getModelNameById(modelId);
+        combined += `### Findings from ${modelName}\n\n${state.content}\n\n---\n\n`;
+      }
+    });
+    return combined || 'Analyzing research parameters across AI models...';
   }
 
   getAvatarGradient(modelId: string): string {
@@ -491,9 +850,9 @@ export class ResearchReportComponent implements OnChanges {
       const text = headerText.toLowerCase();
       if (text.includes('summary') || text.includes('executive')) return 'executiveSummary';
       if (text.includes('finding') || text.includes('key')) return 'keyFindings';
-      if (text.includes('agreement')) return 'agreements';
-      if (text.includes('contradict') || text.includes('disagree') || text.includes('difference')) return 'contradictions';
-      if (text.includes('conclusion') || text.includes('recommendation') || text.includes('final') || text.includes('summary & conclusion')) return 'conclusion';
+      if (text.includes('agreement') || text.includes('consensus')) return 'agreements';
+      if (text.includes('contradict') || text.includes('disagree') || text.includes('risk') || text.includes('difference')) return 'contradictions';
+      if (text.includes('conclusion') || text.includes('recommendation') || text.includes('final')) return 'conclusion';
       return lastSection;
     };
 

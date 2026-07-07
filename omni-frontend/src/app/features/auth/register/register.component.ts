@@ -28,7 +28,7 @@ import { WorkspaceStateService } from '../../../core/services/workspace-state.se
 
         <h1 class="register-title">
           <span *ngIf="currentStep() === 'details'">Create your account</span>
-          <span *ngIf="currentStep() === 'otp'">Verify phone number</span>
+          <span *ngIf="currentStep() === 'otp'">Verify your email</span>
         </h1>
 
         <!-- Step 1 Form: Registration Details -->
@@ -87,25 +87,14 @@ import { WorkspaceStateService } from '../../../core/services/workspace-state.se
             </button>
           </div>
 
-          <div class="form-group">
-            <input
-              type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              class="input-field"
-              [(ngModel)]="phoneNumber"
-              required
-              placeholder="Phone number (e.g. +1234567890)"
-              #phoneInput="ngModel"
-            />
-          </div>
+
 
           <button
             type="submit"
             class="btn-continue"
             [disabled]="detailsForm.invalid || isLoading()"
           >
-            <span *ngIf="isLoading()">Sending code...</span>
+            <span *ngIf="isLoading()">Sending code to email...</span>
             <span *ngIf="!isLoading()">Continue</span>
           </button>
         </form>
@@ -117,7 +106,7 @@ import { WorkspaceStateService } from '../../../core/services/workspace-state.se
           </div>
 
           <div class="otp-instructions">
-            We sent a 6-digit verification code to <strong>{{ phoneNumber }}</strong>. Enter the code below to complete registration.
+            We sent a 6-digit verification code to <strong class="phone-highlight">{{ email }}</strong>. Check your inbox (or spam folder) to complete registration.
           </div>
 
           <div class="form-group">
@@ -141,13 +130,13 @@ import { WorkspaceStateService } from '../../../core/services/workspace-state.se
             class="btn-continue"
             [disabled]="otpForm.invalid || isLoading()"
           >
-            <span *ngIf="isLoading()">Verifying...</span>
+            <span *ngIf="isLoading()">Verifying code...</span>
             <span *ngIf="!isLoading()">Verify & Create Account</span>
           </button>
 
           <div class="resend-container">
-            <span *ngIf="resendCountdown() > 0">
-              Resend code in {{ resendCountdown() }}s
+            <span *ngIf="resendCountdown() > 0" class="resend-countdown-badge">
+              ⏱ Resend code in {{ resendCountdown() }}s
             </span>
             <button
               *ngIf="resendCountdown() === 0"
@@ -283,21 +272,49 @@ import { WorkspaceStateService } from '../../../core/services/workspace-state.se
       width: 100%;
     }
 
-    .input-field {
+    .phone-input-container {
+      display: flex;
+      gap: 0.5rem;
       width: 100%;
-      padding: 0.875rem 1rem;
+    }
+
+    .country-select {
+      padding: 0.875rem 0.5rem;
       border-radius: 8px;
       border: 1px solid var(--border-light);
       background-color: var(--bg-secondary);
       color: var(--text-primary);
-      font-size: 0.9375rem;
-      transition: all 0.2s ease;
-      box-sizing: border-box;
-    }
-    .input-field:focus {
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
       outline: none;
+      transition: all 0.2s ease;
+    }
+    .country-select:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 2px var(--primary-glow);
+    }
+
+    .phone-number-input {
+      flex: 1;
+    }
+
+    .phone-highlight {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .resend-countdown-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background-color: var(--bg-secondary);
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      border: 1px solid var(--border-light);
     }
 
     .otp-input {
@@ -501,7 +518,6 @@ export class RegisterComponent implements OnDestroy {
   email = '';
   password = '';
   showPassword = signal(false);
-  phoneNumber = '';
   otpCode = '';
 
   currentStep = signal<'details' | 'otp'>('details');
@@ -515,12 +531,12 @@ export class RegisterComponent implements OnDestroy {
   }
 
   onSendOtp(): void {
-    if (!this.email || !this.phoneNumber) return;
+    if (!this.email) return;
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.authService.sendOtp(this.email, this.phoneNumber).subscribe({
+    this.authService.sendOtp(this.email).subscribe({
       next: () => {
         this.isLoading.set(false);
         this.currentStep.set('otp');
@@ -529,7 +545,7 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMessage.set(err.error?.error || 'Failed to send verification code. Check email/phone number.');
+        this.errorMessage.set(err.error?.error || 'Failed to send verification code to email.');
       }
     });
   }
@@ -540,7 +556,7 @@ export class RegisterComponent implements OnDestroy {
   }
 
   onSubmitRegister(): void {
-    if (!this.fullName || !this.email || !this.password || !this.phoneNumber || !this.otpCode) return;
+    if (!this.fullName || !this.email || !this.password || !this.otpCode) return;
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
@@ -549,7 +565,6 @@ export class RegisterComponent implements OnDestroy {
       this.fullName,
       this.email,
       this.password,
-      this.phoneNumber,
       this.otpCode
     ).subscribe({
       next: () => {

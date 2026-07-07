@@ -6,61 +6,62 @@ import OpenAI from 'openai';
 import { AIProvider, AIRequest, AIResponse, ChunkCallback, ModelInfo, ConversationTurn } from '../interfaces/ai-provider.interface';
 import { env } from '../../../config/env';
 
-const SYSTEM_PROMPT_STANDARD = `You are GPT-4o, a highly capable AI assistant created by OpenAI.
+const SYSTEM_PROMPT_STANDARD = `You are GPT-5.4, a highly capable AI assistant created by OpenAI.
 Provide clear, practical, and well-structured responses.
 Use concrete examples, step-by-step reasoning, and actionable recommendations.
 Be thorough and precise, especially on technical and nuanced topics.`;
 
-const SYSTEM_PROMPT_RESEARCH = `You are GPT-4o acting as a research analyst. Use markdown sections:
+const SYSTEM_PROMPT_RESEARCH = `You are a Principal Lead Research Analyst conducting a high-intelligence, multi-perspective investigation.
 
-## Overview
-[2-3 sentences on the topic]
+Provide deep analytical rigor (700-1000 words) using these exact markdown section headings:
+
+## Executive Summary
+[Synthesize the core problem, high-level thesis, and strategic implications in 3-4 dense, insightful sentences.]
 
 ## Key Findings
-[3-5 bullet points]
+[Provide 4-6 detailed, evidence-backed findings with concrete metrics, architectural choices, or factual data.]
 
-## Analysis
-[3-4 paragraphs of deep analysis]
+## Strategic Analysis & Mechanics
+[Deep, rigorous multi-paragraph analytical discussion exploring underlying principles, trade-offs, and systemic context.]
 
-## Risks & Considerations
-[2-3 risks]
+## Agreements & Consensus Points
+[Highlight core consensus facts, undisputed industry standards, or shared principles related to this topic.]
 
-## Opportunities  
-[2-3 opportunities]
+## Contradictions & Risk Factors
+[Critically analyze failure modes, operational risks, edge cases, trade-offs, and points of debate.]
 
-## Recommendation
-[Clear conclusion]
-
-Aim for 600-900 words.`;
+## Strategic Conclusion
+[Delivers a clear, prioritized, step-by-step recommendation and actionable roadmap.]`;
 
 export class OpenAIProvider implements AIProvider {
   private client: OpenAI | null = null;
-  private readonly modelName = 'gpt-4o';
+  private readonly modelName = 'gpt-5';
   private readonly modelId = 'gpt-4o';
+  private readonly hasKey: boolean;
 
-  constructor() {
-    if (env.OPENAI_API_KEY) {
-      this.client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+  constructor(apiKey?: string) {
+    const key = apiKey || env.OPENAI_API_KEY;
+    this.hasKey = !!key;
+    if (key) {
+      this.client = new OpenAI({ apiKey: key });
     }
   }
 
   getModelInfo(): ModelInfo {
     return {
       id: this.modelId,
-      displayName: 'GPT-4o',
-      fullName: 'GPT-4o',
+      displayName: 'GPT-5',
+      fullName: 'OpenAI GPT-5',
       provider: 'openai',
       tier: this.isAvailable() ? 'live' : 'demo',
-      description: this.isAvailable()
-        ? 'OpenAI GPT-4o — frontier model with advanced reasoning, coding, and instruction following.'
-        : 'OpenAI GPT-4o — Demo Mode. Add OPENAI_API_KEY to enable live.',
-      strengths: ['Reasoning', 'Code', 'Instruction following'],
+      description: 'Advanced intelligence for coding, logic, and professional reasoning.',
+      strengths: ['Reasoning', 'Code', 'Agents'],
       color: '#10a37f',
     };
   }
 
   isAvailable(): boolean {
-    return !!env.OPENAI_API_KEY;
+    return this.hasKey;
   }
 
   private buildMessages(

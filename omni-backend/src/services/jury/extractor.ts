@@ -3,7 +3,7 @@
 // Uses a provider fallback chain: gemini → openai → deepseek → claude → any available.
 // Returns structured agreements, contradictions, and unique insights.
 
-import { providerRegistry } from '../ai/provider-registry';
+import { providerRegistry, UserKeys } from '../ai/provider-registry';
 import { AIProvider } from '../ai/interfaces/ai-provider.interface';
 
 export interface ExtractionResult {
@@ -31,10 +31,12 @@ const JURY_PROVIDER_CHAIN = ['gemini-flash', 'gpt-4o', 'deepseek-chat', 'claude-
  * Attempts to get a working provider from the fallback chain.
  * Returns the first provider that can be resolved (real or mock).
  */
-function getJuryProvider(): AIProvider {
+function getJuryProvider(userKeys?: UserKeys): AIProvider {
   for (const modelId of JURY_PROVIDER_CHAIN) {
     try {
-      return providerRegistry.getProvider(modelId);
+      return userKeys
+        ? providerRegistry.getProviderWithUserKeys(modelId, userKeys)
+        : providerRegistry.getProvider(modelId);
     } catch {
       continue;
     }
@@ -44,7 +46,8 @@ function getJuryProvider(): AIProvider {
 
 export async function extractClaims(
   prompt: string,
-  responses: ModelResponseInput[]
+  responses: ModelResponseInput[],
+  userKeys?: UserKeys
 ): Promise<ExtractionResult> {
   // Filter out empty/invalid responses — only process successful ones
   const validResponses = responses.filter(r => r.content.trim().length > 2);
@@ -106,7 +109,7 @@ Rules:
 - Use the exact modelId strings from the responses above`;
 
   try {
-    const provider = getJuryProvider();
+    const provider = getJuryProvider(userKeys);
     const response = await provider.generateResponse({
       prompt: extractionPrompt,
       temperature: 0,

@@ -28,7 +28,7 @@ export class WorkspaceStateService {
   authModalType = signal<'login' | 'register' | null>(null);
   confirmModal = signal<ConfirmModalState | null>(null);
   settingsModalOpen = signal<boolean>(false);
-  settingsActiveTab = signal<'profile' | 'history' | 'project' | 'general'>('profile');
+  settingsActiveTab = signal<'profile' | 'history' | 'project' | 'general' | 'apikeys'>('profile');
 
   confirm(title: string, message: string, options?: { type?: 'danger' | 'info'; confirmText?: string; cancelText?: string }): Promise<boolean> {
     return new Promise<boolean>((resolve) => {

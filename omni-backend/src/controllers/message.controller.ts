@@ -8,7 +8,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/prisma';
 import { AppError } from '../middleware/error';
-import { providerRegistry, SUPPORTED_MODEL_IDS } from '../services/ai/provider-registry';
+import { providerRegistry, SUPPORTED_MODEL_IDS, UserKeys } from '../services/ai/provider-registry';
 import { SseManager } from '../services/ai/sse-manager';
 import { executeAll } from '../services/ai/orchestrator';
 import { extractClaims } from '../services/jury/extractor';
@@ -70,6 +70,20 @@ export async function streamMessage(req: Request, res: Response): Promise<void> 
     return;
   }
 
+  // Parse user-supplied API keys from header (sent by frontend from localStorage)
+  let userKeys: Record<string, string> | undefined;
+  const userKeysHeader = req.headers['x-user-keys'] as string | undefined;
+  if (userKeysHeader) {
+    try {
+      const parsed = JSON.parse(userKeysHeader);
+      if (typeof parsed === 'object' && parsed !== null) {
+        userKeys = parsed;
+      }
+    } catch {
+      // Ignore malformed header — fall back to env keys / mock
+    }
+  }
+
   const sse = new SseManager(res);
 
   req.on('close', () => sse.close());
@@ -81,13 +95,15 @@ export async function streamMessage(req: Request, res: Response): Promise<void> 
       message.content,
       message.mode as 'standard' | 'research',
       message.sessionId,
-      sse
+      sse,
+      userKeys
     );
   } catch (err) {
     console.error('[Stream] Orchestrator error:', err);
     sse.close();
   }
 }
+
 
 // POST /messages/:id/jury
 export async function generateJury(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -119,12 +135,26 @@ export async function generateJury(req: Request, res: Response, next: NextFuncti
       throw new AppError(400, 'No successful model responses found for this message');
     }
 
+    // Parse user-supplied API keys from header (sent by frontend from localStorage)
+    let userKeys: UserKeys | undefined;
+    const userKeysHeader = req.headers['x-user-keys'] as string | undefined;
+    if (userKeysHeader) {
+      try {
+        const parsed = JSON.parse(userKeysHeader);
+        if (typeof parsed === 'object' && parsed !== null) {
+          userKeys = parsed;
+        }
+      } catch {
+        // Ignore malformed header — fall back to env keys / mock
+      }
+    }
+
     // Three-stage jury pipeline
     console.log(`[Jury Engine] Generating verdict for Message ID: "${messageId}"`);
     console.log(`[Jury Engine] Input user prompt: "${message.content}"`);
     console.log(`[Jury Engine] Responses passed into extractor:\n`, JSON.stringify(message.responses, null, 2));
 
-    const extraction = await extractClaims(message.content, message.responses);
+    const extraction = await extractClaims(message.content, message.responses, userKeys);
     console.log(`[Jury Engine] Extracted claims:\n`, JSON.stringify(extraction, null, 2));
 
     const scoring = calculateConfidence(extraction);
@@ -135,7 +165,8 @@ export async function generateJury(req: Request, res: Response, next: NextFuncti
       message.content,
       message.responses,
       extraction,
-      scoring
+      scoring,
+      userKeys
     );
     console.log(`[Jury Engine] Synthesized synthesis response:\n`, JSON.stringify(synthesis, null, 2));
 

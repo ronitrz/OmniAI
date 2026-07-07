@@ -8,7 +8,6 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  phoneNumber?: string | null;
   profilePicture?: string | null;
   profession?: string | null;
   createdAt: string;
@@ -42,14 +41,14 @@ export class AuthService {
     }
   }
 
-  register(fullName: string, email: string, password: string, phoneNumber: string, otpCode: string): Observable<AuthResponse> {
-    return this.api.post<AuthResponse>('/auth/register', { fullName, email, password, phoneNumber, otpCode }).pipe(
+  register(fullName: string, email: string, password: string, otpCode: string): Observable<AuthResponse> {
+    return this.api.post<AuthResponse>('/auth/register', { fullName, email, password, otpCode }).pipe(
       tap(res => this.handleAuthSuccess(res))
     );
   }
 
-  sendOtp(email: string, phoneNumber: string): Observable<{ success: boolean; message: string }> {
-    return this.api.post<{ success: boolean; message: string }>('/auth/send-otp', { email, phoneNumber });
+  sendOtp(email: string): Observable<{ success: boolean; message: string; email?: string }> {
+    return this.api.post<{ success: boolean; message: string; email?: string }>('/auth/send-otp', { email });
   }
 
   login(email: string, password: string): Observable<AuthResponse> {

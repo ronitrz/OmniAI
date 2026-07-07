@@ -140,6 +140,7 @@ export interface OverlayPanel {
                   <app-research-report
                     [selectedModels]="getModelsInfoForResponses(msg.responses)"
                     [streamStates]="getStreamStatesFromResponses(msg.responses)"
+                    [verdict]="msg.juryVerdict"
                   ></app-research-report>
                 </div>
 
@@ -256,6 +257,7 @@ export interface OverlayPanel {
                 <app-research-report
                   [selectedModels]="activeSelectedModelsInfo()"
                   [streamStates]="activeStreamStates()"
+                  [isDeliberating]="verdictLoading()"
                 ></app-research-report>
               </div>
 

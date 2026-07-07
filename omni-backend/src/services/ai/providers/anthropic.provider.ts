@@ -12,56 +12,57 @@ Provide deeply thoughtful, nuanced, and exceptionally well-structured responses.
 Reason step-by-step through complex problems, consider multiple perspectives, and acknowledge uncertainty where appropriate.
 Be precise, intellectually honest, and aim for the highest quality answer possible.`;
 
-const SYSTEM_PROMPT_RESEARCH = `You are Claude acting as a senior research analyst. Structure your response with markdown sections:
+const SYSTEM_PROMPT_RESEARCH = `You are a Principal Lead Research Analyst conducting a high-intelligence, multi-perspective investigation.
 
-## Overview
-[2-3 sentences on the topic and its significance]
+Provide deep analytical rigor (700-1000 words) using these exact markdown section headings:
+
+## Executive Summary
+[Synthesize the core problem, high-level thesis, and strategic implications in 3-4 dense, insightful sentences.]
 
 ## Key Findings
-[3-5 bullet points of the most important findings]
+[Provide 4-6 detailed, evidence-backed findings with concrete metrics, architectural choices, or factual data.]
 
-## Analysis
-[Deep analytical discussion — 3-4 paragraphs with evidence and reasoning]
+## Strategic Analysis & Mechanics
+[Deep, rigorous multi-paragraph analytical discussion exploring underlying principles, trade-offs, and systemic context.]
 
-## Risks & Considerations
-[2-3 significant risks, challenges, or caveats]
+## Agreements & Consensus Points
+[Highlight core consensus facts, undisputed industry standards, or shared principles related to this topic.]
 
-## Opportunities
-[2-3 opportunities or strategic recommendations]
+## Contradictions & Risk Factors
+[Critically analyze failure modes, operational risks, edge cases, trade-offs, and points of debate.]
 
-## Recommendation
-[Clear, actionable conclusion in 1-2 sentences]
-
-Be thorough, evidence-based, and intellectually honest. Aim for 600-900 words.`;
+## Strategic Conclusion
+[Delivers a clear, prioritized, step-by-step recommendation and actionable roadmap.]`;
 
 export class AnthropicProvider implements AIProvider {
   private client: Anthropic | null = null;
-  private readonly modelName = 'claude-sonnet-4-5';
+  private readonly modelName = 'claude-sonnet-5';
   private readonly modelId = 'claude-haiku';
+  private readonly hasKey: boolean;
 
-  constructor() {
-    if (env.ANTHROPIC_API_KEY) {
-      this.client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  constructor(apiKey?: string) {
+    const key = apiKey || env.ANTHROPIC_API_KEY;
+    this.hasKey = !!key;
+    if (key) {
+      this.client = new Anthropic({ apiKey: key });
     }
   }
 
   getModelInfo(): ModelInfo {
     return {
       id: this.modelId,
-      displayName: 'Claude',
-      fullName: 'Claude Sonnet 4.5',
+      displayName: 'Claude Sonnet 5',
+      fullName: 'Anthropic Claude 5',
       provider: 'anthropic',
       tier: this.isAvailable() ? 'live' : 'demo',
-      description: this.isAvailable()
-        ? 'Anthropic Claude Sonnet 4.5 — frontier intelligence with exceptional reasoning and nuanced analysis.'
-        : 'Anthropic Claude Sonnet 4.5 — Demo Mode. Add ANTHROPIC_API_KEY to enable live.',
-      strengths: ['Deep reasoning', 'Analysis', 'Writing'],
+      description: 'Flagship model for writing, deep analytical reasoning, and complex tasks.',
+      strengths: ['Writing', 'Deep Reasoning', 'Agents'],
       color: '#c9a227',
     };
   }
 
   isAvailable(): boolean {
-    return !!env.ANTHROPIC_API_KEY;
+    return this.hasKey;
   }
 
   private buildMessages(

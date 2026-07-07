@@ -6,6 +6,7 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 import { AuthService } from '../../core/auth/auth.service';
 import { WorkspaceStateService } from '../../core/services/workspace-state.service';
 import { ApiService } from '../../core/services/api.service';
+import { UserKeysService } from '../../core/services/user-keys.service';
 import { LoginComponent } from '../auth/login/login.component';
 import { RegisterComponent } from '../auth/register/register.component';
 
@@ -123,6 +124,20 @@ import { RegisterComponent } from '../auth/register/register.component';
                   </svg>
                   <span class="tab-text">General</span>
                 </button>
+                <button 
+                  type="button" 
+                  class="settings-tab-btn api-keys-tab-btn" 
+                  [class.active]="state.settingsActiveTab() === 'apikeys'" 
+                  (click)="selectTab('apikeys')"
+                >
+                  <span class="api-keys-tab-icon-wrapper">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; flex-shrink: 0;">
+                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                    </svg>
+                    <span class="api-key-count-badge" *ngIf="userKeysService.hasAnyKey()">●</span>
+                  </span>
+                  <span class="tab-text">API Keys</span>
+                </button>
               </div>
             </div>
  
@@ -210,24 +225,7 @@ import { RegisterComponent } from '../auth/register/register.component';
                       </div>
                     </div>
 
-                    <div class="form-group mb-3">
-                      <label class="setting-label">Phone Number</label>
-                      <div class="setting-input-readonly-wrapper">
-                        <div class="input-icon-left">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                        </div>
-                        <input 
-                          type="text" 
-                          class="setting-input-readonly" 
-                          [value]="user.phoneNumber || 'Not provided'" 
-                          readonly 
-                        />
-                        <span class="badge-verified" *ngIf="user.phoneNumber">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 10px; height: 10px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                          Verified
-                        </span>
-                      </div>
-                    </div>
+
 
                     <div class="form-group mb-0">
                       <label class="setting-label">I am a</label>
@@ -522,6 +520,146 @@ import { RegisterComponent } from '../auth/register/register.component';
                   </div>
                 </div>
               </div>
+
+              <!-- API Keys Tab -->
+              <div *ngIf="state.settingsActiveTab() === 'apikeys'" class="settings-tab-content animate-fade-in">
+                <h3>API Keys</h3>
+
+                <!-- Security notice -->
+                <div class="apikeys-notice">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;color:#a78bfa;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                  <span>Keys are stored <strong>locally in your browser only</strong> — never sent to our servers. Models without a key fall back to Demo mode.</span>
+                </div>
+
+                <div class="api-provider-cards">
+
+                  <!-- OpenAI -->
+                  <div class="api-provider-card" [class.configured]="userKeysService.hasKey('openai')">
+                    <div class="api-provider-card-header">
+                      <div class="api-provider-brand">
+                        <div class="api-provider-logo openai-logo">
+                          <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>
+                        </div>
+                        <div>
+                          <span class="api-provider-name">OpenAI</span>
+                          <span class="api-provider-model">GPT-5</span>
+                        </div>
+                      </div>
+                      <span class="api-key-status-badge" [class.configured]="userKeysService.hasKey('openai')">
+                        <svg *ngIf="userKeysService.hasKey('openai')" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        {{ userKeysService.hasKey('openai') ? 'Configured' : 'Not Set' }}
+                      </span>
+                    </div>
+                    <div class="api-key-input-row">
+                      <div class="password-field-wrapper" style="flex:1;">
+                        <input [type]="showOpenAIKey() ? 'text' : 'password'" class="setting-input-text password-input-field" [(ngModel)]="openaiKeyInput" placeholder="sk-..." autocomplete="off"/>
+                        <button type="button" class="password-toggle-btn" (click)="showOpenAIKey.set(!showOpenAIKey())">
+                          <svg *ngIf="showOpenAIKey()" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                          <svg *ngIf="!showOpenAIKey()" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                      </div>
+                      <button type="button" class="btn btn-primary btn-sm api-key-save-btn" (click)="saveApiKey('openai', openaiKeyInput)" [disabled]="!openaiKeyInput.trim()">Save</button>
+                      <button type="button" class="btn btn-danger-outline btn-sm" (click)="clearApiKey('openai')" *ngIf="userKeysService.hasKey('openai')">Clear</button>
+                    </div>
+                    <div class="api-key-hint">Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a></div>
+                  </div>
+
+                  <!-- Gemini -->
+                  <div class="api-provider-card" [class.configured]="userKeysService.hasKey('gemini')">
+                    <div class="api-provider-card-header">
+                      <div class="api-provider-brand">
+                        <div class="api-provider-logo gemini-logo">
+                          <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg>
+                        </div>
+                        <div>
+                          <span class="api-provider-name">Google</span>
+                          <span class="api-provider-model">Gemini 2.5 Flash</span>
+                        </div>
+                      </div>
+                      <span class="api-key-status-badge" [class.configured]="userKeysService.hasKey('gemini')">
+                        <svg *ngIf="userKeysService.hasKey('gemini')" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        {{ userKeysService.hasKey('gemini') ? 'Configured' : 'Not Set' }}
+                      </span>
+                    </div>
+                    <div class="api-key-input-row">
+                      <div class="password-field-wrapper" style="flex:1;">
+                        <input [type]="showGeminiKey() ? 'text' : 'password'" class="setting-input-text password-input-field" [(ngModel)]="geminiKeyInput" placeholder="AIza..." autocomplete="off"/>
+                        <button type="button" class="password-toggle-btn" (click)="showGeminiKey.set(!showGeminiKey())">
+                          <svg *ngIf="showGeminiKey()" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                          <svg *ngIf="!showGeminiKey()" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                      </div>
+                      <button type="button" class="btn btn-primary btn-sm api-key-save-btn" (click)="saveApiKey('gemini', geminiKeyInput)" [disabled]="!geminiKeyInput.trim()">Save</button>
+                      <button type="button" class="btn btn-danger-outline btn-sm" (click)="clearApiKey('gemini')" *ngIf="userKeysService.hasKey('gemini')">Clear</button>
+                    </div>
+                    <div class="api-key-hint">Get your key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a></div>
+                  </div>
+
+                  <!-- Anthropic -->
+                  <div class="api-provider-card" [class.configured]="userKeysService.hasKey('anthropic')">
+                    <div class="api-provider-card-header">
+                      <div class="api-provider-brand">
+                        <div class="api-provider-logo anthropic-logo">
+                          <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg>
+                        </div>
+                        <div>
+                          <span class="api-provider-name">Anthropic</span>
+                          <span class="api-provider-model">Claude Sonnet 5</span>
+                        </div>
+                      </div>
+                      <span class="api-key-status-badge" [class.configured]="userKeysService.hasKey('anthropic')">
+                        <svg *ngIf="userKeysService.hasKey('anthropic')" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        {{ userKeysService.hasKey('anthropic') ? 'Configured' : 'Not Set' }}
+                      </span>
+                    </div>
+                    <div class="api-key-input-row">
+                      <div class="password-field-wrapper" style="flex:1;">
+                        <input [type]="showAnthropicKey() ? 'text' : 'password'" class="setting-input-text password-input-field" [(ngModel)]="anthropicKeyInput" placeholder="sk-ant-..." autocomplete="off"/>
+                        <button type="button" class="password-toggle-btn" (click)="showAnthropicKey.set(!showAnthropicKey())">
+                          <svg *ngIf="showAnthropicKey()" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                          <svg *ngIf="!showAnthropicKey()" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                      </div>
+                      <button type="button" class="btn btn-primary btn-sm api-key-save-btn" (click)="saveApiKey('anthropic', anthropicKeyInput)" [disabled]="!anthropicKeyInput.trim()">Save</button>
+                      <button type="button" class="btn btn-danger-outline btn-sm" (click)="clearApiKey('anthropic')" *ngIf="userKeysService.hasKey('anthropic')">Clear</button>
+                    </div>
+                    <div class="api-key-hint">Get your key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a></div>
+                  </div>
+
+                  <!-- DeepSeek -->
+                  <div class="api-provider-card" [class.configured]="userKeysService.hasKey('deepseek')">
+                    <div class="api-provider-card-header">
+                      <div class="api-provider-brand">
+                        <div class="api-provider-logo deepseek-logo">
+                          <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M23.748 4.651c-.254-.124-.364.113-.512.233-.051.04-.094.09-.137.137-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.155-.708-.311-.955-.65-.172-.24-.219-.509-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434 1.202-.422 1.84.027 1.436.633 2.58 1.838 3.393.137.094.172.187.129.323-.082.28-.18.553-.266.833-.055.179-.137.218-.328.14a5.5 5.5 0 0 1-1.737-1.179c-.857-.828-1.631-1.743-2.597-2.46a12 12 0 0 0-.689-.47c-.985-.957.13-1.743.387-1.836.27-.098.094-.433-.778-.428-.872.003-1.67.295-2.687.685a3 3 0 0 1-.465.136 9.6 9.6 0 0 0-2.883-.101c-1.885.21-3.39 1.1-4.497 2.622C.082 8.776-.231 10.854.152 13.02c.403 2.284 1.568 4.175 3.36 5.653 1.857 1.533 3.997 2.284 6.438 2.14 1.482-.085 3.132-.284 4.994-1.86.47.234.962.328 1.78.398.629.058 1.235-.031 1.705-.129.735-.155.684-.836.418-.961-2.155-1.004-1.682-.595-2.112-.926 1.095-1.295 2.768-3.598 3.284-6.733.05-.346.115-.834.108-1.114-.004-.171.035-.238.23-.257a4.2 4.2 0 0 0 1.545-.475c1.397-.763 1.96-2.016 2.093-3.517.02-.23-.004-.467-.247-.588M11.58 18.168c-2.088-1.642-3.101-2.183-3.52-2.16-.39.024-.32.472-.234.763.09.288.207.487.371.74.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.168-1.361-.801-2.5-1.86-3.301-3.306-.775-1.393-1.225-2.888-1.299-4.482-.02-.385.094-.522.477-.592a4.7 4.7 0 0 1 1.53-.038c2.131.311 3.946 1.264 5.467 2.774.868.86 1.525 1.887 2.202 2.89.72 1.066 1.494 2.082 2.48 2.915.348.291.626.513.892.677-.802.09-2.14.109-3.055-.615zm1.001-6.44a.306.306 0 0 1 .415-.287.3.3 0 0 1 .113.074.3.3 0 0 1 .086.214c0 .17-.136.307-.308.307a.303.303 0 0 1-.306-.307m3.11 1.596c-.2.081-.4.151-.591.16a1.25 1.25 0 0 1-.798-.254c-.274-.23-.47-.358-.551-.758a1.7 1.7 0 0 1 .015-.588c.07-.327-.007-.537-.238-.727-.188-.156-.426-.199-.689-.199a.6.6 0 0 1-.254-.078.253.253 0 0 1-.114-.358 1 1 0 0 1 .192-.21c.356-.202.767-.136 1.146.016.352.144.618.408 1.001.782.392.451.462.576.685.915.176.264.336.536.446.848.066.194-.02.353-.25.45"/></svg>
+                        </div>
+                        <div>
+                          <span class="api-provider-name">DeepSeek</span>
+                          <span class="api-provider-model">DeepSeek R1</span>
+                        </div>
+                      </div>
+                      <span class="api-key-status-badge" [class.configured]="userKeysService.hasKey('deepseek')">
+                        <svg *ngIf="userKeysService.hasKey('deepseek')" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        {{ userKeysService.hasKey('deepseek') ? 'Configured' : 'Not Set' }}
+                      </span>
+                    </div>
+                    <div class="api-key-input-row">
+                      <div class="password-field-wrapper" style="flex:1;">
+                        <input [type]="showDeepSeekKey() ? 'text' : 'password'" class="setting-input-text password-input-field" [(ngModel)]="deepseekKeyInput" placeholder="sk-..." autocomplete="off"/>
+                        <button type="button" class="password-toggle-btn" (click)="showDeepSeekKey.set(!showDeepSeekKey())">
+                          <svg *ngIf="showDeepSeekKey()" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                          <svg *ngIf="!showDeepSeekKey()" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                      </div>
+                      <button type="button" class="btn btn-primary btn-sm api-key-save-btn" (click)="saveApiKey('deepseek', deepseekKeyInput)" [disabled]="!deepseekKeyInput.trim()">Save</button>
+                      <button type="button" class="btn btn-danger-outline btn-sm" (click)="clearApiKey('deepseek')" *ngIf="userKeysService.hasKey('deepseek')">Clear</button>
+                    </div>
+                    <div class="api-key-hint">Get your key at <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a></div>
+                  </div>
+
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -1341,6 +1479,131 @@ import { RegisterComponent } from '../auth/register/register.component';
       background-color: var(--bg-tertiary);
       color: var(--text-primary);
     }
+
+    /* ── API Keys Tab ─────────────────────────────────────────────── */
+    .apikeys-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      padding: 0.875rem 1rem;
+      background: rgba(167, 139, 250, 0.08);
+      border: 1px solid rgba(167, 139, 250, 0.2);
+      border-radius: 10px;
+      margin-bottom: 1.25rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .apikeys-notice strong { color: var(--text-primary); }
+    .api-provider-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .api-provider-card {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 1rem 1.125rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .api-provider-card:hover {
+      border-color: var(--border-hover);
+    }
+    .api-provider-card.configured {
+      border-color: rgba(16, 185, 129, 0.35);
+      box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.12);
+    }
+    .api-provider-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .api-provider-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+    .api-provider-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .openai-logo { background: rgba(16, 163, 127, 0.15); color: #10a37f; }
+    .gemini-logo { background: rgba(66, 133, 244, 0.15); color: #4285f4; }
+    .anthropic-logo { background: rgba(201, 162, 39, 0.15); color: #c9a227; }
+    .deepseek-logo { background: rgba(14, 165, 233, 0.15); color: #0ea5e9; }
+    .api-provider-name {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 650;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .api-provider-model {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.2;
+    }
+    .api-key-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 650;
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      border: 1px solid var(--border-light);
+      transition: all 0.2s ease;
+    }
+    .api-key-status-badge.configured {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .api-key-input-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .api-key-save-btn {
+      padding: 0.5rem 0.875rem !important;
+      font-size: 0.8125rem !important;
+      white-space: nowrap;
+    }
+    .api-key-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .api-key-hint a {
+      color: var(--primary-hover);
+      text-decoration: none;
+    }
+    .api-key-hint a:hover { text-decoration: underline; }
+    .api-keys-tab-icon-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .api-key-count-badge {
+      position: absolute;
+      top: -4px;
+      right: -5px;
+      color: #10b981;
+      font-size: 8px;
+      line-height: 1;
+    }
   `]
 })
 export class DashboardComponent implements OnInit {
@@ -1349,6 +1612,7 @@ export class DashboardComponent implements OnInit {
   private router = inject(Router);
   state = inject(WorkspaceStateService);
   private zone = inject(NgZone);
+  userKeysService = inject(UserKeysService);
 
   // Profile fields
   fullNameInput = '';
@@ -1371,9 +1635,21 @@ export class DashboardComponent implements OnInit {
   oldPasswordInput = '';
   newPasswordInput = '';
   confirmPasswordInput = '';
+
+  // Password visibility toggles for password fields
   showOldPassword = signal(false);
   showNewPassword = signal(false);
   showConfirmPassword = signal(false);
+
+  // API Keys tab
+  openaiKeyInput = '';
+  geminiKeyInput = '';
+  anthropicKeyInput = '';
+  deepseekKeyInput = '';
+  showOpenAIKey = signal(false);
+  showGeminiKey = signal(false);
+  showAnthropicKey = signal(false);
+  showDeepSeekKey = signal(false);
 
   constructor() {
     effect(() => {
@@ -1529,7 +1805,7 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  selectTab(tab: 'profile' | 'history' | 'project' | 'general'): void {
+  selectTab(tab: 'profile' | 'history' | 'project' | 'general' | 'apikeys'): void {
     this.state.settingsActiveTab.set(tab);
     if (tab === 'profile') {
       const user = this.authService.currentUser();
@@ -1700,5 +1976,21 @@ export class DashboardComponent implements OnInit {
   closeSettingsAndOpenLogin(): void {
     this.state.settingsModalOpen.set(false);
     this.state.authModalType.set('login');
+  }
+
+  saveApiKey(provider: 'openai' | 'gemini' | 'anthropic' | 'deepseek', value: string): void {
+    if (!value.trim()) return;
+    this.userKeysService.setKey(provider, value.trim());
+    // Clear the input after saving (write-once UX — key never shown again)
+    switch (provider) {
+      case 'openai': this.openaiKeyInput = ''; this.showOpenAIKey.set(false); break;
+      case 'gemini': this.geminiKeyInput = ''; this.showGeminiKey.set(false); break;
+      case 'anthropic': this.anthropicKeyInput = ''; this.showAnthropicKey.set(false); break;
+      case 'deepseek': this.deepseekKeyInput = ''; this.showDeepSeekKey.set(false); break;
+    }
+  }
+
+  clearApiKey(provider: 'openai' | 'gemini' | 'anthropic' | 'deepseek'): void {
+    this.userKeysService.removeKey(provider);
   }
 }

@@ -3,44 +3,44 @@
 :root {
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   
-  /* Space UI Dark Theme */
-  --bg-primary: #05050f;      /* Midnight space black */
-  --bg-secondary: #0a0b21;    /* Deep cosmic navy */
-  --bg-tertiary: #101233;     /* Nebula card dark blue */
-  --bg-card: #0d0f2b;         /* Space station interior card */
-  --bg-glass: rgba(10, 11, 33, 0.65);
+  /* Modern Obsidian & Electric Indigo Dark Theme */
+  --bg-primary: #090a0f;      /* Deep obsidian slate background */
+  --bg-secondary: #11131e;    /* Sleek dark navy container / sidebar */
+  --bg-tertiary: #181b2a;     /* Elevated card & hover background */
+  --bg-card: #151824;         /* Base card surface */
+  --bg-glass: rgba(17, 19, 30, 0.78);
   
-  --text-primary: #f1f3f9;   /* Stellar white */
-  --text-secondary: #c2c9db; /* Soft starlight gray */
-  --text-muted: #8892b0;     /* Cosmic dust gray */
-  --text-dim: #5c647a;       /* Deep space gray */
+  --text-primary: #f8fafc;   /* Crisp Slate-50 for peak readability */
+  --text-secondary: #cbd5e1; /* Soft Slate-300 for labels & descriptions */
+  --text-muted: #94a3b8;     /* Slate-400 for secondary metadata */
+  --text-dim: #64748b;       /* Slate-500 for subtle captions */
   
-  --primary: #8b5cf6;        /* Nebula Purple */
-  --primary-hover: #a78bfa;  /* Lighter Purple */
-  --primary-glow: rgba(139, 92, 246, 0.12);
-  --primary-gradient: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%); /* Purple to Cyan cosmic gradient */
+  --primary: #6366f1;        /* Electric Indigo */
+  --primary-hover: #818cf8;  /* Vivid Indigo Glow */
+  --primary-glow: rgba(99, 102, 241, 0.16);
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #06b6d4 100%); /* Indigo -> Violet -> Cyan gradient */
   
-  --border-light: rgba(139, 92, 246, 0.12); /* Subtle purple borders */
-  --border-focus: rgba(6, 182, 212, 0.4);
-  --border-hover: rgba(139, 92, 246, 0.3);
+  --border-light: rgba(255, 255, 255, 0.08); /* Crisp subtle border */
+  --border-focus: rgba(99, 102, 241, 0.5);   /* Glowing indigo focus */
+  --border-hover: rgba(99, 102, 241, 0.35);  /* Glowing indigo hover */
   
   /* Status Colors */
-  --color-live: #10b981;      /* Emerald */
-  --color-demo: #f59e0b;      /* Amber */
-  --color-error: #f43f5e;     /* Rose */
+  --color-live: #10b981;      /* Emerald Green */
+  --color-demo: #f59e0b;      /* Vivid Amber */
+  --color-error: #f43f5e;     /* Crimson Red */
   --color-success: #10b981;
-  --color-info: #0ea5e9;      /* Sky Blue */
+  --color-info: #06b6d4;      /* Cyan Blue */
   
-  --shadow-glass: 0 8px 32px rgba(6, 182, 212, 0.08), 0 4px 30px rgba(0, 0, 0, 0.4);
-  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
-  --shadow-card-hover: 0 8px 30px rgba(139, 92, 246, 0.15), 0 0 15px rgba(6, 182, 212, 0.05);
+  --shadow-glass: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.08);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 25px rgba(99, 102, 241, 0.18);
   
-  --bg-tab-header: rgba(3, 7, 18, 0.4);
-  --bg-tab-active: rgba(255, 255, 255, 0.06);
-  --bg-gauge: rgba(0, 0, 0, 0.2);
-  --bg-tabs-container: rgba(3, 7, 18, 0.4);
-  --bg-tabs-header: rgba(0, 0, 0, 0.3);
-  --bg-tab-badge: rgba(255, 255, 255, 0.08);
+  --bg-tab-header: rgba(17, 19, 30, 0.6);
+  --bg-tab-active: rgba(99, 102, 241, 0.12);
+  --bg-gauge: rgba(0, 0, 0, 0.3);
+  --bg-tabs-container: rgba(17, 19, 30, 0.5);
+  --bg-tabs-header: rgba(9, 10, 15, 0.5);
+  --bg-tab-badge: rgba(99, 102, 241, 0.15);
   
   /* Layout */
   --sidebar-width: 280px;
@@ -111,9 +111,9 @@ body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
   background-image: 
-    radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 65%),
-    radial-gradient(circle at 10% 80%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 90% 40%, rgba(139, 92, 246, 0.03) 0%, transparent 40%);
+    radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.14) 0%, transparent 60%),
+    radial-gradient(circle at 85% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 15% 85%, rgba(6, 182, 212, 0.07) 0%, transparent 50%);
   color: var(--text-primary);
   line-height: 1.5;
   overflow-x: hidden;

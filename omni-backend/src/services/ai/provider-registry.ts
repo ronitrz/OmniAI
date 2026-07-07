@@ -21,6 +21,14 @@ import { env } from '../../config/env';
 export const SUPPORTED_MODEL_IDS = ['gemini-flash', 'deepseek-chat', 'gpt-4o', 'claude-haiku'] as const;
 export type SupportedModelId = typeof SUPPORTED_MODEL_IDS[number];
 
+/** User-supplied API keys (one per provider). Values are raw key strings. */
+export interface UserKeys {
+  openai?: string;
+  gemini?: string;
+  anthropic?: string;
+  deepseek?: string;
+}
+
 class ProviderRegistry {
   private providers = new Map<string, AIProvider>();
 
@@ -60,6 +68,45 @@ class ProviderRegistry {
   }
 
   /**
+   * Returns a provider initialized with the user's own API key.
+   * Creates a *fresh* provider instance — does NOT mutate the singletons.
+   * Falls back to mock when no user key AND no env key available.
+   */
+  getProviderWithUserKeys(modelId: string, userKeys: UserKeys): AIProvider {
+    if (!this.providers.has(modelId)) {
+      throw new Error(`Unknown model ID: "${modelId}". Supported: ${SUPPORTED_MODEL_IDS.join(', ')}`);
+    }
+
+    let provider: AIProvider;
+
+    switch (modelId) {
+      case 'gpt-4o':
+        provider = new OpenAIProvider(userKeys.openai);
+        break;
+      case 'gemini-flash':
+        provider = new GeminiProvider(userKeys.gemini);
+        break;
+      case 'claude-haiku':
+        provider = new AnthropicProvider(userKeys.anthropic);
+        break;
+      case 'deepseek-chat':
+        provider = new DeepSeekProvider(userKeys.deepseek);
+        break;
+      default:
+        provider = new MockProvider(modelId);
+    }
+
+    if (!provider.isAvailable()) {
+      if (env.MOCK_MODE) {
+        return new MockProvider(modelId);
+      }
+      throw new Error(`No API key available for "${modelId}". Please add your key in Settings → API Keys.`);
+    }
+
+    return provider;
+  }
+
+  /**
    * Returns the display info for all registered models.
    * Tier is computed at runtime: if real provider is unavailable + MOCK_MODE=true → 'demo'.
    * Used by GET /providers/models to populate the model selector UI.
@@ -93,3 +140,4 @@ class ProviderRegistry {
 
 // Singleton — one registry instance for the entire application lifecycle
 export const providerRegistry = new ProviderRegistry();
+

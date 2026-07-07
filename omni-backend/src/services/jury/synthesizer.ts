@@ -3,7 +3,7 @@
 // Uses a provider fallback chain: gemini → openai → deepseek → claude.
 // Returns a polished consensus narrative with a clear recommendation.
 
-import { providerRegistry } from '../ai/provider-registry';
+import { providerRegistry, UserKeys } from '../ai/provider-registry';
 import { AIProvider } from '../ai/interfaces/ai-provider.interface';
 import { ExtractionResult, ModelResponseInput } from './extractor';
 import { ScoringResult } from './scorer';
@@ -20,10 +20,12 @@ const JURY_PROVIDER_CHAIN = ['gemini-flash', 'gpt-4o', 'deepseek-chat', 'claude-
  * Attempts to get a working provider from the fallback chain.
  * Returns the first provider that can be resolved (real or mock).
  */
-function getJuryProvider(): AIProvider {
+function getJuryProvider(userKeys?: UserKeys): AIProvider {
   for (const modelId of JURY_PROVIDER_CHAIN) {
     try {
-      return providerRegistry.getProvider(modelId);
+      return userKeys
+        ? providerRegistry.getProviderWithUserKeys(modelId, userKeys)
+        : providerRegistry.getProvider(modelId);
     } catch {
       continue;
     }
@@ -35,7 +37,8 @@ export async function synthesizeVerdict(
   prompt: string,
   responses: ModelResponseInput[],
   extraction: ExtractionResult,
-  scoring: ScoringResult
+  scoring: ScoringResult,
+  userKeys?: UserKeys
 ): Promise<SynthesisResult> {
   const validResponses = responses.filter(r => r.content.trim().length > 2);
 
@@ -92,7 +95,7 @@ Return as JSON (no markdown fences):
 Return ONLY valid JSON.`;
 
   try {
-    const provider = getJuryProvider();
+    const provider = getJuryProvider(userKeys);
     const response = await provider.generateResponse({
       prompt: synthesisPrompt,
       temperature: 0.3, // Slightly creative but mostly deterministic

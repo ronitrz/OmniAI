@@ -12,37 +12,40 @@ Think through problems step-by-step with rigorous logic.
 Provide accurate, well-structured responses with depth and precision.
 Focus on concrete details, actionable insights, and comprehensive coverage of the topic.`;
 
-const SYSTEM_PROMPT_RESEARCH = `You are a senior research analyst. Structure your response with markdown sections:
+const SYSTEM_PROMPT_RESEARCH = `You are a Principal Lead Research Analyst conducting a high-intelligence, multi-perspective investigation.
 
-## Overview
-[2-3 sentences on the topic and its significance]
+Provide deep analytical rigor (700-1000 words) using these exact markdown section headings:
+
+## Executive Summary
+[Synthesize the core problem, high-level thesis, and strategic implications in 3-4 dense, insightful sentences.]
 
 ## Key Findings
-[3-5 bullet points of the most important findings]
+[Provide 4-6 detailed, evidence-backed findings with concrete metrics, architectural choices, or factual data.]
 
-## Analysis
-[Deep analytical discussion — 3-4 paragraphs with reasoning and evidence]
+## Strategic Analysis & Mechanics
+[Deep, rigorous multi-paragraph analytical discussion exploring underlying principles, trade-offs, and systemic context.]
 
-## Risks & Considerations
-[2-3 significant risks or challenges]
+## Agreements & Consensus Points
+[Highlight core consensus facts, undisputed industry standards, or shared principles related to this topic.]
 
-## Opportunities
-[2-3 opportunities or strategic advantages]
+## Contradictions & Risk Factors
+[Critically analyze failure modes, operational risks, edge cases, trade-offs, and points of debate.]
 
-## Recommendation
-[Clear, actionable conclusion in 1-2 sentences]
-
-Aim for 600-900 words. Be thorough and analytical.`;
+## Strategic Conclusion
+[Delivers a clear, prioritized, step-by-step recommendation and actionable roadmap.]`;
 
 export class DeepSeekProvider implements AIProvider {
   private client: OpenAI | null = null;
   private readonly modelName = 'deepseek-reasoner'; // Maps to DeepSeek-R1 (reasoning model)
   private readonly modelId = 'deepseek-chat';
+  private readonly hasKey: boolean;
 
-  constructor() {
-    if (env.DEEPSEEK_API_KEY) {
+  constructor(apiKey?: string) {
+    const key = apiKey || env.DEEPSEEK_API_KEY;
+    this.hasKey = !!key;
+    if (key) {
       this.client = new OpenAI({
-        apiKey: env.DEEPSEEK_API_KEY,
+        apiKey: key,
         baseURL: 'https://api.deepseek.com/v1',
       });
     }
@@ -51,20 +54,18 @@ export class DeepSeekProvider implements AIProvider {
   getModelInfo(): ModelInfo {
     return {
       id: this.modelId,
-      displayName: 'DeepSeek',
+      displayName: 'DeepSeek R1',
       fullName: 'DeepSeek R1',
       provider: 'deepseek',
       tier: this.isAvailable() ? 'live' : 'demo',
-      description: this.isAvailable()
-        ? 'DeepSeek R1 — frontier reasoning model with chain-of-thought thinking, rivaling o1-class intelligence.'
-        : 'DeepSeek R1 — Demo Mode. Add DEEPSEEK_API_KEY to enable live.',
-      strengths: ['Chain-of-thought reasoning', 'Math & Code', 'Analysis'],
+      description: 'Frontier chain-of-thought reasoning model for math, code, and analysis.',
+      strengths: ['Chain-of-Thought', 'Math & Code', 'Analysis'],
       color: '#0ea5e9',
     };
   }
 
   isAvailable(): boolean {
-    return !!env.DEEPSEEK_API_KEY;
+    return this.hasKey;
   }
 
   private buildMessages(

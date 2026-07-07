@@ -12,7 +12,6 @@ model User {
   email          String      @unique
   passwordHash   String      @map("password_hash")
   fullName       String      @map("full_name")
-  phoneNumber    String?     @unique @map("phone_number")
   profilePicture String?     @map("profile_picture")
   profession     String?
   createdAt      DateTime    @default(now()) @map("created_at")
@@ -93,11 +92,12 @@ model JuryVerdict {
 }
 
 model OtpVerification {
-  id          String   @id @default(uuid())
-  phoneNumber String   @map("phone_number")
-  code        String
-  expiresAt   DateTime @map("expires_at")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id         String   @id @default(uuid())
+  identifier String   @default("")
+  code       String
+  attempts   Int      @default(0)
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
 
   @@map("otp_verifications")
 }

@@ -51,17 +51,21 @@ export interface ModelInfo {
               <svg *ngIf="model.id === 'deepseek-chat'" class="model-logo-svg" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M23.748 4.651c-.254-.124-.364.113-.512.233-.051.04-.094.09-.137.137-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.155-.708-.311-.955-.65-.172-.24-.219-.509-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434 1.202-.422 1.84.027 1.436.633 2.58 1.838 3.393.137.094.172.187.129.323-.082.28-.18.553-.266.833-.055.179-.137.218-.328.14a5.5 5.5 0 0 1-1.737-1.179c-.857-.828-1.631-1.743-2.597-2.46a12 12 0 0 0-.689-.47c-.985-.957.13-1.743.387-1.836.27-.098.094-.433-.778-.428-.872.003-1.67.295-2.687.685a3 3 0 0 1-.465.136 9.6 9.6 0 0 0-2.883-.101c-1.885.21-3.39 1.1-4.497 2.622C.082 8.776-.231 10.854.152 13.02c.403 2.284 1.568 4.175 3.36 5.653 1.857 1.533 3.997 2.284 6.438 2.14 1.482-.085 3.132-.284 4.994-1.86.47.234.962.328 1.78.398.629.058 1.235-.031 1.705-.129.735-.155.684-.836.418-.961-2.155-1.004-1.682-.595-2.112-.926 1.095-1.295 2.768-3.598 3.284-6.733.05-.346.115-.834.108-1.114-.004-.171.035-.238.23-.257a4.2 4.2 0 0 0 1.545-.475c1.397-.763 1.96-2.016 2.093-3.517.02-.23-.004-.467-.247-.588M11.58 18.168c-2.088-1.642-3.101-2.183-3.52-2.16-.39.024-.32.472-.234.763.09.288.207.487.371.74.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.168-1.361-.801-2.5-1.86-3.301-3.306-.775-1.393-1.225-2.888-1.299-4.482-.02-.385.094-.522.477-.592a4.7 4.7 0 0 1 1.53-.038c2.131.311 3.946 1.264 5.467 2.774.868.86 1.525 1.887 2.202 2.89.72 1.066 1.494 2.082 2.48 2.915.348.291.626.513.892.677-.802.09-2.14.109-3.055-.615zm1.001-6.44a.306.306 0 0 1 .415-.287.3.3 0 0 1 .113.074.3.3 0 0 1 .086.214c0 .17-.136.307-.308.307a.303.303 0 0 1-.306-.307m3.11 1.596c-.2.081-.4.151-.591.16a1.25 1.25 0 0 1-.798-.254c-.274-.23-.47-.358-.551-.758a1.7 1.7 0 0 1 .015-.588c.07-.327-.007-.537-.238-.727-.188-.156-.426-.199-.689-.199a.6.6 0 0 1-.254-.078.253.253 0 0 1-.114-.358 1 1 0 0 1 .192-.21c.356-.202.767-.136 1.146.016.352.144.618.408 1.001.782.392.451.462.576.685.915.176.264.336.536.446.848.066.194-.02.353-.25.45"/>
               </svg>
-              <svg *ngIf="!model.id" class="model-logo-svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm-3-9a1.5 1.5 0 1 1 1.5-1.5A1.5 1.5 0 0 1 9 11zm6 0a1.5 1.5 0 1 1 1.5-1.5A1.5 1.5 0 0 1 15 11zm-6 4a3 3 0 0 0 6 0Z"/>
-              </svg>
             </div>
             <div class="model-details">
               <span class="model-name">{{ model.displayName }}</span>
-              <span class="model-fullname">{{ model.fullName }}</span>
+              <span class="model-provider-badge">{{ getProviderLabel(model) }}</span>
             </div>
             <app-model-badge [tier]="model.tier"></app-model-badge>
           </div>
-          <p class="model-description">{{ model.description }}</p>
+
+          <p class="model-description">{{ getCleanDescription(model) }}</p>
+
+          <div class="strengths-row" *ngIf="model.strengths && model.strengths.length > 0">
+            <span *ngFor="let tag of model.strengths" class="strength-pill">
+              {{ tag }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -79,35 +83,52 @@ export interface ModelInfo {
     }
     .title {
       font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
+      font-weight: 700;
+      letter-spacing: 0.08em;
       color: var(--text-secondary);
+      text-transform: uppercase;
     }
     .count {
       font-size: 0.75rem;
       color: var(--text-muted);
+      font-weight: 600;
     }
     .models-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    @media (max-width: 1024px) {
+      .models-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 550px) {
+      .models-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
     .model-card {
-      padding: 1rem;
-      border-radius: 12px;
+      min-width: 0;
+      padding: 1.125rem;
+      border-radius: 14px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
-      transition: all 0.2s ease;
+      gap: 0.625rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--border-light);
+      background: rgba(255, 255, 255, 0.015);
+      position: relative;
     }
     .model-card:hover {
-      border-color: rgba(255, 255, 255, 0.15);
-      background-color: var(--bg-tertiary);
+      border-color: rgba(255, 255, 255, 0.18);
+      background-color: rgba(255, 255, 255, 0.035);
+      transform: translateY(-2px);
     }
     .model-card.selected {
       background-color: rgba(255, 255, 255, 0.03);
-      box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.02);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
     }
     .model-meta {
       display: flex;
@@ -116,20 +137,18 @@ export interface ModelInfo {
       position: relative;
     }
     .model-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #fff;
+      flex-shrink: 0;
     }
     
     .model-logo-svg {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       color: #ffffff;
       display: block;
     }
@@ -140,26 +159,42 @@ export interface ModelInfo {
       min-width: 0;
     }
     .model-name {
-      font-size: 0.875rem;
-      font-weight: 600;
+      font-size: 0.9375rem;
+      font-weight: 750;
       color: var(--text-primary);
-    }
-    .model-fullname {
-      font-size: 0.7rem;
-      color: var(--text-muted);
+      line-height: 1.2;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .model-provider-badge {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-top: 0.15rem;
+    }
     .model-description {
-      font-size: 0.75rem;
+      font-size: 0.78125rem;
       color: var(--text-secondary);
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      line-height: 1.45;
+      margin: 0;
+      min-height: 2.2rem;
+    }
+    .strengths-row {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      margin-top: 0.15rem;
+    }
+    .strength-pill {
+      font-size: 0.625rem;
+      font-weight: 650;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      background-color: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
     }
   `]
 })
@@ -167,6 +202,24 @@ export class ModelSelectorComponent {
   @Input() models: ModelInfo[] = [];
   @Input() selectedIds = new Set<string>();
   @Output() selectionChanged = new EventEmitter<Set<string>>();
+
+  getProviderLabel(model: ModelInfo): string {
+    if (model.id === 'gpt-4o') return 'OpenAI';
+    if (model.id === 'gemini-flash') return 'Google AI';
+    if (model.id === 'claude-haiku') return 'Anthropic';
+    if (model.id === 'deepseek-chat') return 'DeepSeek';
+    return model.provider || 'AI Provider';
+  }
+
+  getCleanDescription(model: ModelInfo): string {
+    if (!model.description || model.description.includes('Demo Mode') || model.description.includes('API_KEY')) {
+      if (model.id === 'gemini-flash') return '1M token context window & fast multimodal reasoning.';
+      if (model.id === 'gpt-4o') return 'Advanced intelligence for coding, logic & complex reasoning.';
+      if (model.id === 'claude-haiku') return 'Flagship model for writing, deep analytical reasoning & agents.';
+      if (model.id === 'deepseek-chat') return 'Frontier chain-of-thought reasoning model for math & code.';
+    }
+    return model.description;
+  }
 
   toggleSelection(id: string): void {
     const updated = new Set<string>(this.selectedIds);

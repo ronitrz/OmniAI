@@ -12,57 +12,57 @@ Provide clear, accurate, and well-structured responses.
 Think through problems carefully, draw on broad knowledge, and deliver insightful, direct answers.
 Be thorough but concise, and use examples where helpful.`;
 
-const SYSTEM_PROMPT_RESEARCH = `You are a senior research analyst conducting a professional analysis. 
-Structure your response with the following sections using markdown headers:
+const SYSTEM_PROMPT_RESEARCH = `You are a Principal Lead Research Analyst conducting a high-intelligence, multi-perspective investigation.
 
-## Overview
-[2-3 sentences on the topic and its significance]
+Provide deep analytical rigor (700-1000 words) using these exact markdown section headings:
 
-## Key Findings  
-[3-5 bullet points of the most important findings and insights]
+## Executive Summary
+[Synthesize the core problem, high-level thesis, and strategic implications in 3-4 dense, insightful sentences.]
 
-## Analysis
-[Deep analytical discussion with supporting reasoning — 3-4 paragraphs]
+## Key Findings
+[Provide 4-6 detailed, evidence-backed findings with concrete metrics, architectural choices, or factual data.]
 
-## Risks & Considerations
-[2-3 significant risks, challenges, or caveats]
+## Strategic Analysis & Mechanics
+[Deep, rigorous multi-paragraph analytical discussion exploring underlying principles, trade-offs, and systemic context.]
 
-## Opportunities
-[2-3 opportunities, upsides, or recommended next steps]
+## Agreements & Consensus Points
+[Highlight core consensus facts, undisputed industry standards, or shared principles related to this topic.]
 
-## Recommendation
-[1-2 sentences with a clear, actionable conclusion]
+## Contradictions & Risk Factors
+[Critically analyze failure modes, operational risks, edge cases, trade-offs, and points of debate.]
 
-Be thorough and evidence-based. Aim for 600-900 words total.`;
+## Strategic Conclusion
+[Delivers a clear, prioritized, step-by-step recommendation and actionable roadmap.]`;
 
 export class GeminiProvider implements AIProvider {
   private client: GoogleGenerativeAI | null = null;
   private readonly modelName = 'gemini-2.5-flash';
   private readonly modelId = 'gemini-flash';
+  private readonly hasKey: boolean;
 
-  constructor() {
-    if (env.GEMINI_API_KEY) {
-      this.client = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+  constructor(apiKey?: string) {
+    const key = apiKey || env.GEMINI_API_KEY;
+    this.hasKey = !!key;
+    if (key) {
+      this.client = new GoogleGenerativeAI(key);
     }
   }
 
   getModelInfo(): ModelInfo {
     return {
       id: this.modelId,
-      displayName: 'Gemini',
-      fullName: 'Gemini 2.5 Flash',
+      displayName: 'Gemini 2.5 Flash',
+      fullName: 'Google Gemini 2.5',
       provider: 'google',
       tier: this.isAvailable() ? 'live' : 'demo',
-      description: this.isAvailable()
-        ? 'Google Gemini 2.5 Flash — most intelligent Gemini model with built-in thinking and 1M token context.'
-        : 'Google Gemini 2.5 Flash — Demo Mode. Add GEMINI_API_KEY to enable live.',
-      strengths: ['Reasoning', 'Long context', 'Multimodal'],
+      description: '1M token context window with fast multimodal reasoning.',
+      strengths: ['Speed', '1M Context', 'Multimodal'],
       color: '#4285F4',
     };
   }
 
   isAvailable(): boolean {
-    return !!env.GEMINI_API_KEY;
+    return this.hasKey;
   }
 
   async streamResponse(request: AIRequest, onChunk: ChunkCallback): Promise<AIResponse> {

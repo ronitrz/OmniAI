@@ -1,7 +1,8 @@
 // src/app/core/services/sse.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { UserKeysService } from './user-keys.service';
 
 export interface SseEvent {
   event: 'model-start' | 'model-chunk' | 'model-end' | 'model-error' | 'all-complete';
@@ -18,17 +19,25 @@ export interface SseEvent {
 })
 export class SseService {
   private baseUrl = environment.apiUrl;
+  private userKeys = inject(UserKeysService);
 
   connect(messageId: string): Observable<SseEvent> {
     return new Observable<SseEvent>((subscriber) => {
       const token = localStorage.getItem('omni_token');
       const controller = new AbortController();
+
+      // Build request headers
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`
+      };
+      const keysHeader = this.userKeys.getHeaderValue();
+      if (keysHeader) {
+        headers['x-user-keys'] = keysHeader;
+      }
       
       // We use fetch instead of EventSource so we can pass the Authorization header
       fetch(`${this.baseUrl}/messages/${messageId}/stream`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         signal: controller.signal
       })
       .then(async (response) => {
@@ -97,3 +106,4 @@ export class SseService {
     });
   }
 }
+

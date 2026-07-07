@@ -68,19 +68,17 @@ async function runTests() {
   {
     // Need token for providers — get one first via login or register
     const email = `test_${Date.now()}@omni.ai`;
-    const phoneNumber = `+1555${Math.floor(100000 + Math.random() * 900000)}`;
 
     // 1. Send OTP
     const sendOtpRes = await request('POST', '/auth/send-otp', {
       email,
-      phoneNumber,
     });
     log('POST /auth/send-otp', sendOtpRes.status, sendOtpRes.data);
     assert(sendOtpRes.status === 200, 'Send OTP returns 200');
 
     // 2. Fetch OTP from database
     const otpRecord = await prisma.otpVerification.findFirst({
-      where: { phoneNumber },
+      where: { identifier: email },
       orderBy: { createdAt: 'desc' },
     });
     assert(!!otpRecord, 'OTP record exists in database');
@@ -91,7 +89,6 @@ async function runTests() {
       fullName: 'Test User',
       email,
       password: 'password123',
-      phoneNumber,
       otpCode,
     });
     log('POST /auth/register', regResult.status, regResult.data);

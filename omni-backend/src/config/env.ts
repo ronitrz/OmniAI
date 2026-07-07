@@ -28,6 +28,15 @@ const envSchema = z.object({
 
   // Mock mode
   MOCK_MODE: z.enum(['true', 'false']).default('true'),
+
+  // Email Gateway Configuration (100% Free via Gmail SMTP or Resend API)
+  EMAIL_PROVIDER: z.enum(['auto', 'smtp', 'resend']).default('auto'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { UserKeysService } from './user-keys.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ import { environment } from '../../../environments/environment';
 export class ApiService {
   private http = inject(HttpClient);
   private baseUrl = environment.apiUrl;
+  private userKeys = inject(UserKeysService);
 
   private getHeaders(): HttpHeaders {
     let headers = new HttpHeaders({
@@ -19,6 +21,11 @@ export class ApiService {
     const token = localStorage.getItem('omni_token');
     if (token) {
       headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    const keysHeader = this.userKeys.getHeaderValue();
+    if (keysHeader) {
+      headers = headers.set('x-user-keys', keysHeader);
     }
     
     return headers;
@@ -44,3 +51,4 @@ export class ApiService {
     return this.http.delete<T>(`${this.baseUrl}${path}`, { headers: this.getHeaders() });
   }
 }
+

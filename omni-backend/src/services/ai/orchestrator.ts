@@ -9,7 +9,7 @@
 // - Each model gets ITS OWN conversation history (not a blended transcript)
 
 import { prisma } from '../../config/prisma';
-import { providerRegistry } from './provider-registry';
+import { providerRegistry, UserKeys } from './provider-registry';
 import { SseManager } from './sse-manager';
 import { AIRequest, ConversationTurn } from './interfaces/ai-provider.interface';
 
@@ -21,8 +21,10 @@ export async function executeAll(
   prompt: string,
   mode: 'standard' | 'research',
   sessionId: string,
-  sse: SseManager
+  sse: SseManager,
+  userKeys?: UserKeys
 ): Promise<void> {
+
   // Build conversation history for context (multi-turn support)
   // Each model gets its own history: only messages from that model
   const allMessages = await prisma.message.findMany({
@@ -33,8 +35,11 @@ export async function executeAll(
 
   // Execute all models concurrently
   const modelTasks = selectedModelIds.map(async (modelId) => {
-    const provider = providerRegistry.getProvider(modelId);
+    const provider = userKeys
+      ? providerRegistry.getProviderWithUserKeys(modelId, userKeys)
+      : providerRegistry.getProvider(modelId);
     const modelInfo = provider.getModelInfo();
+
 
     // Signal the client that this model is starting
     sse.sendModelStart(modelId, modelInfo.displayName);

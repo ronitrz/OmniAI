@@ -40,7 +40,7 @@ import { Workspace } from '../../models/workspace.model';
           <div class="stat-divider"></div>
           <div class="stat-col">
             <span class="stat-num">{{ getTotalSessionsCount() }}</span>
-            <span class="stat-lbl">Debates</span>
+            <span class="stat-lbl">Conversations</span>
           </div>
         </div>
 
@@ -171,7 +171,12 @@ import { Workspace } from '../../models/workspace.model';
             </button>
           </div>
  
-          <button class="profile-trigger-btn" (click)="toggleProfileMenu($event)" type="button">
+          <button 
+            class="profile-trigger-btn" 
+            [class.active-menu]="profileMenuOpen()" 
+            (click)="toggleProfileMenu($event)" 
+            type="button"
+          >
             <div 
               class="user-avatar" 
               [style.backgroundImage]="getAvatarBackground(user.profilePicture)"
@@ -185,7 +190,7 @@ import { Workspace } from '../../models/workspace.model';
               <div class="user-name">{{ user.fullName }}</div>
               <div class="user-email">{{ user.email }}</div>
             </div>
-            <span class="chevron-icon">▲</span>
+            <span class="chevron-icon" [class.rotated]="profileMenuOpen()">▲</span>
           </button>
         </ng-container>
 
@@ -542,21 +547,36 @@ import { Workspace } from '../../models/workspace.model';
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      background: none;
-      border: 1px solid transparent;
-      border-radius: 10px;
-      padding: 0.5rem;
+      background-color: var(--bg-tertiary, rgba(255, 255, 255, 0.04));
+      border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
+      border-radius: 12px;
+      padding: 0.625rem 0.75rem;
       cursor: pointer;
       text-align: left;
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       color: inherit;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      position: relative;
+      overflow: hidden;
     }
-    .profile-trigger-btn:hover {
-      background-color: rgba(255, 255, 255, 0.04);
-      border-color: var(--border-light);
+    .profile-trigger-btn:hover, .profile-trigger-btn.active-menu {
+      background-color: rgba(99, 102, 241, 0.12);
+      border-color: var(--primary);
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.22);
+      transform: translateY(-1px);
     }
-    .light-theme .profile-trigger-btn:hover {
-      background-color: rgba(0, 0, 0, 0.02);
+    .profile-trigger-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+    .light-theme .profile-trigger-btn {
+      background-color: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+    .light-theme .profile-trigger-btn:hover, .light-theme .profile-trigger-btn.active-menu {
+      background-color: rgba(99, 102, 241, 0.1);
+      border-color: var(--primary);
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.18);
     }
     .user-avatar {
       width: 36px;
@@ -598,10 +618,13 @@ import { Workspace } from '../../models/workspace.model';
       font-size: 0.625rem;
       color: var(--text-muted);
       margin-left: auto;
-      transition: color 0.2s ease;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease;
     }
-    .profile-trigger-btn:hover .chevron-icon {
-      color: var(--text-primary);
+    .chevron-icon.rotated {
+      transform: rotate(180deg);
+    }
+    .profile-trigger-btn:hover .chevron-icon, .profile-trigger-btn.active-menu .chevron-icon {
+      color: var(--primary);
     }
     
     /* Popover menu styles */

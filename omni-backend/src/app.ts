@@ -26,7 +26,7 @@ app.use(cors({
   origin: env.FRONTEND_URL,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-keys'],
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -80,10 +80,10 @@ async function start() {
       console.log(`🎭 Mock Mode: ${env.MOCK_MODE ? 'ENABLED' : 'DISABLED'}`);
       console.log('');
       console.log('📡 AI Provider Status:');
-      console.log(`   Gemini Flash:  ${env.GEMINI_API_KEY ? '🟢 LIVE' : '🟡 DEMO (no key)'}`);
-      console.log(`   DeepSeek:      ${env.DEEPSEEK_API_KEY ? '🟢 LIVE' : '🟡 DEMO (no key)'}`);
-      console.log(`   GPT-4o:        ${env.OPENAI_API_KEY ? '🟢 LIVE' : '🟡 DEMO (no key)'}`);
-      console.log(`   Claude Haiku:  ${env.ANTHROPIC_API_KEY ? '🟢 LIVE' : '🟡 DEMO (no key)'}`);
+      console.log(`   Gemini Flash:      ${env.GEMINI_API_KEY ? '🟢 LIVE' : '🟡 DEMO (no key)'}`);
+      console.log(`   DeepSeek:          ${env.DEEPSEEK_API_KEY ? '🟢 LIVE' : '🟡 DEMO (no key)'}`);
+      console.log(`   GPT-5:             ${env.OPENAI_API_KEY ? '🟢 LIVE' : '🟡 DEMO (no key)'}`);
+      console.log(`   Claude Sonnet 5:   ${env.ANTHROPIC_API_KEY ? '🟢 LIVE' : '🟡 DEMO (no key)'}`);
     });
   } catch (err) {
     console.error('❌ Failed to start server:', err);
