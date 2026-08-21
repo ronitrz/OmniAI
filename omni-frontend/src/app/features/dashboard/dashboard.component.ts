@@ -423,7 +423,7 @@ import { RegisterComponent } from '../auth/register/register.component';
                         >
                           <div class="history-session-info">
                             <span class="history-session-title">{{ session.title }}</span>
-                            <span class="history-session-date">{{ session.createdAt | date:'mediumDate' }} at {{ session.createdAt | date:'shortTime' }}</span>
+                            <span class="history-session-date" [title]="session.createdAt | date:'medium'">{{ relativeTime(session.createdAt) }}</span>
                           </div>
                           <span class="history-item-arrow">→</span>
                         </div>
@@ -573,7 +573,7 @@ import { RegisterComponent } from '../auth/register/register.component';
                         </div>
                         <div>
                           <span class="api-provider-name">Google</span>
-                          <span class="api-provider-model">Gemini 2.5 Flash</span>
+                          <span class="api-provider-model">Gemini 3.5 Flash</span>
                         </div>
                       </div>
                       <span class="api-key-status-badge" [class.configured]="userKeysService.hasKey('gemini')">
@@ -1814,8 +1814,6 @@ export class DashboardComponent implements OnInit {
         this.selectedAvatar = user.profilePicture || null;
         this.professionInput = user.profession || '';
       }
-    } else if (tab === 'history') {
-      this.loadHistorySessions();
     }
   }
 
@@ -1992,5 +1990,31 @@ export class DashboardComponent implements OnInit {
 
   clearApiKey(provider: 'openai' | 'gemini' | 'anthropic' | 'deepseek'): void {
     this.userKeysService.removeKey(provider);
+  }
+
+  relativeTime(dateStr: string): string {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+
+    if (diffSec < 60) return 'Just now';
+    if (diffMin < 60) return diffMin === 1 ? '1 minute ago' : `${diffMin} minutes ago`;
+    if (diffHr < 24) return diffHr === 1 ? '1 hour ago' : `${diffHr} hours ago`;
+    if (diffDay === 1) return 'Yesterday';
+    if (diffDay < 7) return `${diffDay} days ago`;
+    if (diffDay < 30) {
+      const weeks = Math.floor(diffDay / 7);
+      return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
+    }
+    if (diffDay < 365) {
+      const months = Math.floor(diffDay / 30);
+      return months === 1 ? '1 month ago' : `${months} months ago`;
+    }
+    const years = Math.floor(diffDay / 365);
+    return years === 1 ? '1 year ago' : `${years} years ago`;
   }
 }

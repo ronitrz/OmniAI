@@ -671,8 +671,8 @@ const MODEL_CONFIGS: Record<string, ModelInfo> = {
   },
   'gemini-flash': {
     id: 'gemini-flash',
-    displayName: 'Gemini 2.5 Flash',
-    fullName: 'Google Gemini 2.5',
+    displayName: 'Gemini 3.5 Flash',
+    fullName: 'Google Gemini 3.5',
     provider: 'google',
     tier: 'demo',
     description: '1M token context window with fast multimodal reasoning.',

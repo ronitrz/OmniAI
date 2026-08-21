@@ -8,6 +8,7 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { SseService, SseEvent } from '../../core/services/sse.service';
 import { WorkspaceStateService } from '../../core/services/workspace-state.service';
+import { UserKeysService } from '../../core/services/user-keys.service';
 import { ModelInfo } from './model-selector/model-selector.component';
 import { ChatInputComponent } from './chat-input/chat-input.component';
 import { ResponseGridComponent } from './response-grid/response-grid.component';
@@ -1275,6 +1276,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private router = inject(Router);
   private api = inject(ApiService);
   private sseService = inject(SseService);
+  private userKeysService = inject(UserKeysService);
   state = inject(WorkspaceStateService);
   auth = inject(AuthService);
 
@@ -1476,9 +1478,25 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Load models list
     this.api.get<{ models: ModelInfo[] }>('/providers/models').subscribe({
       next: (res) => {
-        this.allModels.set(res.models);
+        // Override tier to 'live' for any model whose provider key is stored locally
+        const providerToModelId: Record<string, string> = {
+          gemini: 'gemini-flash',
+          openai: 'gpt-4o',
+          anthropic: 'claude-haiku',
+          deepseek: 'deepseek-chat',
+        };
+        const models = res.models.map(m => {
+          const providerKey = Object.keys(providerToModelId).find(
+            k => providerToModelId[k] === m.id
+          ) as keyof typeof providerToModelId | undefined;
+          if (providerKey && this.userKeysService.hasKey(providerKey as any)) {
+            return { ...m, tier: 'live' as const };
+          }
+          return m;
+        });
+        this.allModels.set(models);
         // Default select all 4 models initially
-        this.selectedModelIds.set(new Set(res.models.map(m => m.id)));
+        this.selectedModelIds.set(new Set(models.map(m => m.id)));
       },
       error: () => {}
     });
@@ -1804,15 +1822,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     const list: ModelInfo[] = [];
     for (const r of responses) {
       const info = this.allModels().find(m => m.id === r.modelId);
+      // Use isMock from the actual response record to show the correct badge
+      const tier: 'live' | 'demo' = r.isMock === false ? 'live' : 'demo';
       if (info) {
-        list.push(info);
+        list.push({ ...info, tier });
       } else {
         list.push({
           id: r.modelId,
           displayName: r.modelName,
           fullName: r.modelName,
           provider: 'unknown',
-          tier: 'demo',
+          tier,
           description: '',
           strengths: [],
           color: '#9ca3af'

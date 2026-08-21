@@ -106,7 +106,7 @@ export async function getMessages(req: Request, res: Response, next: NextFunctio
             content: true,
             status: true,
             latencyMs: true,
-            // isMock intentionally excluded — never sent to frontend
+            isMock: true,
           },
         },
         juryVerdict: true,

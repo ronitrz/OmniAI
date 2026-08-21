@@ -36,7 +36,7 @@ Provide deep analytical rigor (700-1000 words) using these exact markdown sectio
 
 export class GeminiProvider implements AIProvider {
   private client: GoogleGenerativeAI | null = null;
-  private readonly modelName = 'gemini-2.5-flash';
+  private readonly modelName = 'gemini-3.5-flash';
   private readonly modelId = 'gemini-flash';
   private readonly hasKey: boolean;
 
@@ -51,8 +51,8 @@ export class GeminiProvider implements AIProvider {
   getModelInfo(): ModelInfo {
     return {
       id: this.modelId,
-      displayName: 'Gemini 2.5 Flash',
-      fullName: 'Google Gemini 2.5',
+      displayName: 'Gemini 3.5 Flash',
+      fullName: 'Google Gemini 3.5',
       provider: 'google',
       tier: this.isAvailable() ? 'live' : 'demo',
       description: '1M token context window with fast multimodal reasoning.',
